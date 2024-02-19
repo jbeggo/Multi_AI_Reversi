@@ -1,4 +1,4 @@
-from utils.setup import Application
+from utils.setup import Game
 
-app = Application()
-app.game_loop()
+gameObj = Game()
+gameObj.game_loop()
