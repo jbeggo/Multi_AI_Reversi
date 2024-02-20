@@ -2,7 +2,9 @@ from utils.board import Board
 from copy import deepcopy
 
 def minimax(position: Board, depth: int, alpha: int, beta: int, isMaximizingPlayer: bool) -> int:
-    if depth == 0 or position.check_game_over() is True:
+    
+    # Check for game over or no depth set
+    if depth == 0 or position.is_game_over() is True:
         return position.evaluate_board()
     
     if isMaximizingPlayer:

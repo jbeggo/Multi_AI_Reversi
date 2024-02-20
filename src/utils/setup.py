@@ -18,7 +18,7 @@ class Game:
 
         self.game_board = Board()
 
-        self.background = Colors.WHITE
+        self.background = (204,204,204)
 
         # pygame window setup: set size, colours, window title
         self.screen = pygame.display.set_mode((Game.WINDOW_WIDTH, Game.WINDOW_HEIGHT))
@@ -26,25 +26,26 @@ class Game:
         pygame.display.flip() # 'flip' is full display update
         pygame.display.set_caption("Reversi AI")
 
-        # Load images from assets such as grid lines, starting menu, game over screen
-        self.boardIMG = pygame.image.load("images/Light-Mode/Othello_Black_Side_Board.png")
-        self.endScreenBlackIMG = pygame.image.load("images/Light-Mode/End_Screen_Black.png")
-        self.endScreenWhiteIMG = pygame.image.load("images/Light-Mode/End_Screen_White.png")
-        self.endScreenDrawIMG = pygame.image.load("images/Light-Mode/End_Screen_Draw.png")
-        self.endPromptIMG  = pygame.image.load("images/Light-Mode/End_Prompt.png")
-        self.choiceIMG = pygame.image.load("images/Light-Mode/Othello_Game-mode_Choice.png")
-        self.blackCircleIMG = pygame.image.load("images/Light-Mode/black-circle.png")
+        # Load images such as grid lines, starting menu, game over screen
+        self.boardIMG = pygame.image.load("images/Board2.png")
+
+        self.endScreenBlackIMG = pygame.image.load("images/Black_Win_Screen.png")
+        self.endScreenWhiteIMG = pygame.image.load("images/White_Win_Screen.png")
+        self.endScreenDrawIMG = pygame.image.load("images/Draw_Win_Screen.png")
+
+        self.endPromptIMG  = pygame.image.load("images/Replay_Prompt.png")
+        self.choiceIMG = pygame.image.load("images/Game_Mode_Prompt.png")
 
         # Load font that displays the score
         self.scoreFont = pygame.font.Font("Gotham-Font/GothamLight.ttf", 40)
 
-        self.single_player = False
-        self.displayed_choice = False
+        self.is_single_player = False
+        self.game_mode_chosen = False
 
         self.running = True
         
         self.is_game_over = False #just declaring
-        self.move_preview = False
+        self.preview_set = False
 
         self.turn = 1 #black player always starts
         self.last_move = (0,0)
@@ -61,17 +62,18 @@ class Game:
                 pygame.time.delay(30)
             pygame.display.flip()        
 
-    def drawBlackDisc(self, x: int, y: int, r: int):
+    def draw_black_disk(self, x: int, y: int, r: int):
         #pygame.draw.circle(self.screen, Colors.BLACK, coords, radius)
         gfxdraw.aacircle(self.screen, x, y, r, Colors.BLACK)
         gfxdraw.filled_circle(self.screen, x, y, r, Colors.BLACK)
-        
-        #img = pygame.transform.scale(self.blackCircleIMG,(radius,radius))
-        #self.screen.blit(img, (x, y))
+   
+    def draw_white_disk(self, x: int, y: int, r: int):
+        gfxdraw.aacircle(self.screen, x, y, r, Colors.WHITE)
+        gfxdraw.filled_circle(self.screen, x, y, r, Colors.WHITE)
 
-    def drawWhiteDisc(self, x, y, radius: int, radius_diff: int):
-        drawBlackDisc(self.screen, x, y,radius)
-        pygame.draw.circle(self.screen, Colors.WHITE, (x, y), radius - radius_diff)
+    '''def drawWhiteDisc(self, x: int, y: int, radius: int, radius_diff: int):
+        self.drawBlackDisc(self.screen, x, y, radius)
+        pygame.draw.circle(self.screen, Colors.WHITE, (x, y), radius - radius_diff)'''
 
     def handleMouseClick(self) -> None:
         '''Handle events following mouse click on the board'''
@@ -87,8 +89,9 @@ class Game:
 
         self.last_move = (r, c)
         self.game_board.set_discs(r, c, self.turn)
-        self.move_preview = False
+        self.preview_set = False
 
+        # draws over old move previews
         for pos in possible_moves:
             row, col = pos
             x = 100 + 75 * col
@@ -117,8 +120,8 @@ class Game:
         
         '''Reset game init'''
         self.turn = Board.BLACK
-        self.single_player = False
-        self.displayed_choice = False
+        self.is_single_player = False
+        self.game_mode_chosen = False
         self.is_game_over = False
         self.game_board.reset_board()
 
@@ -126,7 +129,7 @@ class Game:
         self.last_move = (0,0)
 
     def displayDiscs(self) -> None:
-        '''Display all the dics present on the game board'''
+        '''Display B&W Disks'''
 
         for row in range(8):
             for col in range(8):
@@ -135,20 +138,20 @@ class Game:
                 #y = 137.5 + 75 * row
                 y = 138 + 75 * row
                 if self.game_board.board[row, col] == Board.BLACK:
-                    self.drawBlackDisc(x, y, 33)
+                    self.draw_black_disk(x, y, 33)
 
                 elif self.game_board.board[row, col] == Board.WHITE:
-                    self.drawWhiteDisc(x, y, 33, 2.5)
+                    self.draw_white_disk(x, y, 33)
     
-    def markLastMove(self) -> None:
-        '''Mark the last move made on the game board'''
+    '''def mark_last_move(self) -> None:
+        ''Mark the last move made on the game board''
 
         r, c = self.last_move
 
         x = c * 75 + 100 + 75/2
         y = r * 75 + 100 + 75/2
         pygame.draw.circle(self.screen, Colors.RED, (x, y), radius=5)
-        pygame.display.flip()
+        pygame.display.flip()'''
 
     def displayScore(self) -> None:
         '''Blit the score of each player during the game'''
@@ -159,22 +162,22 @@ class Game:
         self.screen.blit(dummy_surface, (1060, 510))
 
         text_color = Colors.BLACK
-        black_disc_count = self.scoreFont.render(f"{self.game_board.black_disc_count}", False, text_color)
-        white_disc_count = self.scoreFont.render(f"{self.game_board.white_disc_count}", False, text_color)
+        black_disc_count = self.scoreFont.render(f"{self.game_board.black_disk_count}", False, text_color)
+        white_disc_count = self.scoreFont.render(f"{self.game_board.white_disk_count}", False, text_color)
         self.screen.blit(black_disc_count, (885, 510))
         self.screen.blit(white_disc_count, (1060, 510))
         
         pygame.display.flip()
 
-    def displayLegalMoves(self) -> None:
+    def move_preview(self):
         '''Display all the possible legal moves for the player with the current turn.'''
 
-        if self.move_preview:    # possible moves are already displayed
+        if self.preview_set:    # possible moves are already displayed
             return
         
         possible_moves = self.game_board.all_legal_moves(self.turn)
         if not possible_moves:
-            self.move_preview = False
+            self.preview_set = False
             self.turn *= -1
             return
         
@@ -195,15 +198,15 @@ class Game:
 
             self.screen.blit(surface, (x, y))
             
-        self.move_preview = True
+        self.preview_set = True
 
     def gameOverScreen(self) -> None:
         '''Display the game over screen in accordance with the game result.'''
 
-        if self.game_board.black_disc_count > self.game_board.white_disc_count: # black won
+        if self.game_board.black_disk_count > self.game_board.white_disk_count: # black won
             Game.fade(self.screen, (self.endScreenBlackIMG, (725, 250)))
 
-        elif self.game_board.black_disc_count < self.game_board.white_disc_count:   # white won
+        elif self.game_board.black_disk_count < self.game_board.white_disk_count:   # white won
             Game.fade(self.screen, (self.endScreenWhiteIMG, (725, 250)))
 
         else:   # draw
@@ -216,7 +219,7 @@ class Game:
         '''Code to run when it is computer player's turn.'''
         
         r, c = find_best_move(self.game_board)
-        self.move_preview = False
+        self.preview_set = False
         
         if (r,c) == (20, 20):
             return
@@ -227,7 +230,7 @@ class Game:
 
         # update board visuals
         self.displayDiscs()
-        self.markLastMove()
+        #self.mark_last_move()
         self.displayScore()
 
     def handleGameModeChoice(self, event) -> None:
@@ -236,9 +239,9 @@ class Game:
         if event.key not in (pygame.K_a, pygame.K_h):
             return
         
-        self.single_player = (event.key == pygame.K_a)
+        self.is_single_player = (event.key == pygame.K_a)
 
-        self.displayed_choice = True
+        self.game_mode_chosen = True
 
         dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
                                             Game.WINDOW_HEIGHT  ))
@@ -252,8 +255,8 @@ class Game:
 
         self.screen.blit(self.boardIMG, (0,0))
 
-        self.drawBlackDisc(825, 525, 50)
-        self.drawWhiteDisc(1000, 525, 50, 5)
+        self.draw_black_disk(825, 525, 50)
+        self.draw_white_disk(1000, 525, 50)
 
     def game_loop(self) -> None:
         '''Game loop to run the application.'''
@@ -271,10 +274,10 @@ class Game:
                 elif self.is_game_over and event.type == pygame.KEYDOWN:
                     self.handleGameEnd(event)
 
-                elif not self.displayed_choice and event.type == pygame.KEYDOWN:
+                elif not self.game_mode_chosen and event.type == pygame.KEYDOWN:
                     self.handleGameModeChoice(event)
 
-            if not self.displayed_choice:
+            if not self.game_mode_chosen:
                 self.screen.blit(self.choiceIMG, (0,0))
                 continue
 
@@ -283,16 +286,17 @@ class Game:
             
             self.displayDiscs()
             
-            self.markLastMove()
+            #self.mark_last_move()
 
             self.displayScore()
 
-            if self.single_player and self.turn == Board.WHITE:
+            if self.is_single_player and self.turn == Board.WHITE:
                 self.computerPlayerTurn()
 
-            self.displayLegalMoves()
+            self.move_preview()
 
-            if self.game_board.check_game_over() is True:
+            # game over?
+            if self.game_board.is_game_over():
                 self.gameOverScreen()
 
         pygame.quit()

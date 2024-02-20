@@ -1,6 +1,7 @@
 import numpy as np
 
 class Board:
+    
     WHITE = -1
     BLACK =  1
     EMPTY =  0
@@ -8,30 +9,30 @@ class Board:
     DIRECTIONS = (  ( 1, 0),    # right
                     (-1, 0),    # left
                     ( 0, 1),    # down
-                    (-1, 1),    # downwards left
-                    ( 1, 1),    # downwards right
+                    (-1, 1),    # down left
+                    ( 1, 1),    # down right
                     ( 0,-1),    # up
-                    (-1,-1),    # upwards left
-                    ( 1,-1),    # upwards right
+                    (-1,-1),    # up left
+                    ( 1,-1),    # up right
                 )
 
     def __init__(self) -> None:
-        '''Initiliaze the Othello game board with a 8x8 numpy matrix'''
+        '''Initialise board as a 8x8 2D numpy array (matrix)'''
         self.board = np.array([0]*8, dtype = np.int8)   # initiliasing 1D array with the first row of 8 zeroes
         self.board = self.board[np.newaxis, : ]         # expanding 1D array to 2D array
         for _ in range(3):                              # increasing rows till 8
             self.board = np.concatenate((self.board, self.board), axis = 0)
 
-        # initiliasing the centre squares
+        # centre squares in middle of board
         self.board[3, 3] = self.board[4,4] = Board.WHITE
         self.board[3, 4] = self.board[4,3] = Board.BLACK
 
-        self.black_disc_count = 2
-        self.white_disc_count = 2
+        self.black_disk_count = 2
+        self.white_disk_count = 2
     
     @staticmethod
-    def checkCoordRange(x: int, y: int) -> bool:
-        '''Returns true if the given parameters represent an actual cell in a 8x8 matrix'''
+    def is_valid_cell(x: int, y: int) -> bool:
+        '''Returns true if given coords correspond to valid cell in an 8x8 matrix'''
 
         return (x >= 0 and y >= 0) and (x < 8 and y < 8)
 
@@ -58,20 +59,20 @@ class Board:
             row = r + rowDir
             col = c + colDir
                 
-            if Board.checkCoordRange(row, col) is False or self.board[row, col] != OPPONENT:
+            if Board.is_valid_cell(row, col) is False or self.board[row, col] != OPPONENT:
                 continue
             
             row += rowDir
             col += colDir
-            while (Board.checkCoordRange(row, col) is True and self.board[row, col] == OPPONENT):
+            while (Board.is_valid_cell(row, col) is True and self.board[row, col] == OPPONENT):
                 row += rowDir
                 col += colDir
-            if (Board.checkCoordRange(row, col) is True and self.board[row, col] == Board.EMPTY):   # possible move
+            if (Board.is_valid_cell(row, col) is True and self.board[row, col] == Board.EMPTY):   # possible move
                 legal_moves.append((row, col))
 
         return legal_moves
 
-    def flipDiscs(self, PLAYER: int, initCoords: tuple[int, int], endCoords: tuple[int, int], direction: tuple[int, int]):
+    def flip_disks(self, PLAYER: int, initCoords: tuple[int, int], endCoords: tuple[int, int], direction: tuple[int, int]):
         '''Flip the discs between the given two cells to the given PLAYER color.'''
 
         OPPONENT = PLAYER * -1
@@ -99,23 +100,20 @@ class Board:
             r = row + rowDir
             c = col + colDir
 
-            if Board.checkCoordRange(r, c) is False or self.board[r, c] != OPPONENT:
+            if Board.is_valid_cell(r, c) is False or self.board[r, c] != OPPONENT:
                 continue
             
             r += rowDir
             c += colDir
-            while (Board.checkCoordRange(r, c) is True and self.board[r, c] == OPPONENT):
+            while (Board.is_valid_cell(r, c) is True and self.board[r, c] == OPPONENT):
                 r += rowDir
                 c += colDir
-            if (Board.checkCoordRange(r, c) is True and self.board[r, c] == PLAYER):
-                self.flipDiscs(PLAYER, (row, col), (r, c), dir) 
+            if (Board.is_valid_cell(r, c) is True and self.board[r, c] == PLAYER):
+                self.flip_disks(PLAYER, (row, col), (r, c), dir) 
                 
         # update disc counters
-        self.black_disc_count = self.board[self.board > 0].sum()
-        self.white_disc_count = -self.board[self.board < 0].sum()
-
-    def print_board(self) -> None:
-        print(self.board)
+        self.black_disk_count = self.board[self.board > 0].sum()
+        self.white_disk_count = -self.board[self.board < 0].sum()
 
     def reset_board(self) -> None:
         self.board.fill(Board.EMPTY)
@@ -124,13 +122,13 @@ class Board:
         self.board[3, 3] = self.board[4,4] = Board.WHITE
         self.board[3, 4] = self.board[4,3] = Board.BLACK
 
-        self.black_disc_count = self.white_disc_count = 2
+        self.black_disk_count = self.white_disk_count = 2
 
-    def check_game_over(self) -> bool:
-        possibleBlackMoves = self.all_legal_moves(Board.BLACK)
-        possibleWhiteMoves = self.all_legal_moves(Board.WHITE)
+    def is_game_over(self) -> bool:
+        possible_black_moves = self.all_legal_moves(Board.BLACK)
+        possible_white_moves = self.all_legal_moves(Board.WHITE)
 
-        if possibleBlackMoves or possibleWhiteMoves:
+        if possible_black_moves or possible_white_moves:
             return False
         return True
     
@@ -138,7 +136,7 @@ class Board:
         '''Evaluate the board as per various heuristics.'''
 
         # coin parity heuristic
-        coin_parity = 100 * (self.black_disc_count - self.white_disc_count) / (self.black_disc_count + self.white_disc_count)
+        coin_parity = 100 * (self.black_disk_count - self.white_disk_count) / (self.black_disk_count + self.white_disk_count)
         
         # mobility heuristic value
         black_mobility = len(self.all_legal_moves(Board.BLACK))
