@@ -46,6 +46,7 @@ def minimax(position: Board, depth: int, alpha: int, beta: int, isMaximizingPlay
     return minEval
 
 def find_best_move(position: Board) -> tuple[int, int]:
+
     bestMove = (20, 20)
     bestEval = float('+inf')
 
@@ -63,3 +64,4 @@ def find_best_move(position: Board) -> tuple[int, int]:
                 bestMove = (row, col)
                 bestEval = currentEval
     return bestMove
+

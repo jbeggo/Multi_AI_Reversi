@@ -75,7 +75,7 @@ class Game:
         self.drawBlackDisc(self.screen, x, y, radius)
         pygame.draw.circle(self.screen, Colors.WHITE, (x, y), radius - radius_diff)'''
 
-    def handleMouseClick(self) -> None:
+    def do_mouse_click(self) -> None:
         '''Handle events following mouse click on the board'''
 
         mx, my = pygame.mouse.get_pos()
@@ -100,7 +100,7 @@ class Game:
 
         self.turn *= -1
     
-    def handleGameEnd(self, event: pygame.event.Event):
+    def game_over(self, event: pygame.event.Event):
         '''Handle the events following the end of game:
                 1. Either restarts the game,
                 2. Or Quits the Application.
@@ -128,14 +128,16 @@ class Game:
         self.displayInitialBoardPos()
         self.last_move = (0,0)
 
-    def displayDiscs(self) -> None:
-        '''Display B&W Disks'''
+    def display_disks(self) -> None:
+        '''Display all Disks on board (not score disks)'''
 
+        # iterate over an 8x8 matrix
         for row in range(8):
             for col in range(8):
+                # NOT SURE WHY THIS WASNT BROKEN PASSING FLOAT TO AN INT DRAW FUNCTION
                 #x = 137.5 + 75 * col
-                x = 138 + 75 * col
                 #y = 137.5 + 75 * row
+                x = 138 + 75 * col
                 y = 138 + 75 * row
                 if self.game_board.board[row, col] == Board.BLACK:
                     self.draw_black_disk(x, y, 33)
@@ -154,7 +156,7 @@ class Game:
         pygame.display.flip()'''
 
     def displayScore(self) -> None:
-        '''Blit the score of each player during the game'''
+        '''Display the score text of each player'''
 
         dummy_surface = pygame.Surface((60, 40))
         dummy_surface.fill(self.background)
@@ -162,8 +164,8 @@ class Game:
         self.screen.blit(dummy_surface, (1060, 510))
 
         text_color = Colors.BLACK
-        black_disc_count = self.scoreFont.render(f"{self.game_board.black_disk_count}", False, text_color)
-        white_disc_count = self.scoreFont.render(f"{self.game_board.white_disk_count}", False, text_color)
+        black_disc_count = self.scoreFont.render(f"{self.game_board.black_disk_count}", True, text_color)
+        white_disc_count = self.scoreFont.render(f"{self.game_board.white_disk_count}", True, text_color)
         self.screen.blit(black_disc_count, (885, 510))
         self.screen.blit(white_disc_count, (1060, 510))
         
@@ -229,11 +231,11 @@ class Game:
         self.turn *= -1
 
         # update board visuals
-        self.displayDiscs()
+        self.display_disks()
         #self.mark_last_move()
         self.displayScore()
 
-    def handleGameModeChoice(self, event) -> None:
+    def choose_game_mode(self, event) -> None:
         '''Handle the events at the initial screen.'''
 
         if event.key not in (pygame.K_a, pygame.K_h):
@@ -244,17 +246,18 @@ class Game:
         self.game_mode_chosen = True
 
         dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
-                                            Game.WINDOW_HEIGHT  ))
+                                        Game.WINDOW_HEIGHT  ))
         dummy_surface.fill(self.background)
         Game.fade(self.screen, (dummy_surface, (0, 0)))
 
         self.displayInitialBoardPos()
             
     def displayInitialBoardPos(self) -> None:
-        '''Blitting initial board position on screen'''
+        '''Blit the board image and score indicators'''
 
         self.screen.blit(self.boardIMG, (0,0))
 
+        # draw the score circles
         self.draw_black_disk(825, 525, 50)
         self.draw_white_disk(1000, 525, 50)
 
@@ -269,13 +272,13 @@ class Game:
                     self.running = False
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    self.handleMouseClick()
+                    self.do_mouse_click()
 
                 elif self.is_game_over and event.type == pygame.KEYDOWN:
-                    self.handleGameEnd(event)
+                    self.game_over(event)
 
                 elif not self.game_mode_chosen and event.type == pygame.KEYDOWN:
-                    self.handleGameModeChoice(event)
+                    self.choose_game_mode(event)
 
             if not self.game_mode_chosen:
                 self.screen.blit(self.choiceIMG, (0,0))
@@ -284,7 +287,7 @@ class Game:
             if self.is_game_over:
                 continue  
             
-            self.displayDiscs()
+            self.display_disks()
             
             #self.mark_last_move()
 
