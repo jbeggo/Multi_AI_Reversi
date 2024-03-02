@@ -63,7 +63,6 @@ class Game:
             pygame.display.flip()        
 
     def draw_black_disk(self, x: int, y: int, r: int):
-        #pygame.draw.circle(self.screen, Colors.BLACK, coords, radius)
         gfxdraw.aacircle(self.screen, x, y, r, Colors.BLACK)
         gfxdraw.filled_circle(self.screen, x, y, r, Colors.BLACK)
    
