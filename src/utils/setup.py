@@ -1,6 +1,7 @@
 from utils.board import Board
 from utils.colors import Colors
 from utils.minimax import find_best_move
+from utils.random_AI import random_move
 import pygame
 from pygame import gfxdraw
 
@@ -63,7 +64,6 @@ class Game:
             pygame.display.flip()        
 
     def draw_black_disk(self, x: int, y: int, r: int):
-        #pygame.draw.circle(self.screen, Colors.BLACK, coords, radius)
         gfxdraw.aacircle(self.screen, x, y, r, Colors.BLACK)
         gfxdraw.filled_circle(self.screen, x, y, r, Colors.BLACK)
    
@@ -71,9 +71,6 @@ class Game:
         gfxdraw.aacircle(self.screen, x, y, r, Colors.WHITE)
         gfxdraw.filled_circle(self.screen, x, y, r, Colors.WHITE)
 
-    '''def drawWhiteDisc(self, x: int, y: int, radius: int, radius_diff: int):
-        self.drawBlackDisc(self.screen, x, y, radius)
-        pygame.draw.circle(self.screen, Colors.WHITE, (x, y), radius - radius_diff)'''
 
     def do_mouse_click(self) -> None:
         '''Handle events following mouse click on the board'''
@@ -220,7 +217,11 @@ class Game:
     def computerPlayerTurn(self) -> None:
         '''Code to run when it is computer player's turn.'''
         
-        r, c = find_best_move(self.game_board)
+        # USING RANDOM
+        r, c = random_move(self.game_board)
+
+        # USING MINIMAX
+        #r, c = find_best_move(self.game_board)
         self.preview_set = False
         
         if (r,c) == (20, 20):
