@@ -92,7 +92,7 @@ class Board:
     def set_discs(self, row: int, col: int, PLAYER: int) -> None:
         ''' Set the discs on the board as per the move made on the given cell '''
         
-        PLAYER = self.board[row, col]
+        self.board[row, col] = PLAYER
         OPPONENT = PLAYER * - 1
         
         for dir in Board.DIRECTIONS:

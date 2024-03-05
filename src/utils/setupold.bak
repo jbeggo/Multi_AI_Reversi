@@ -2,7 +2,7 @@ from utils.board import Board
 from utils.colors import Colors
 from utils.minimax_AI import minimax_move
 from utils.random_AI import random_move
-import pygame, time
+import pygame
 from pygame import gfxdraw
 
 pygame.init()
@@ -71,6 +71,7 @@ class Game:
         gfxdraw.aacircle(self.screen, x, y, r, Colors.WHITE)
         gfxdraw.filled_circle(self.screen, x, y, r, Colors.WHITE)
 
+
     def do_mouse_click(self) -> None:
         '''Handle events following mouse click on the board'''
 
@@ -95,10 +96,6 @@ class Game:
             pygame.draw.rect(self.screen, self.background, pygame.Rect(x+4, y+4, 67, 67))
 
         self.turn *= -1
-
-        # Update the display after each move
-        self.display_disks()
-        self.displayScore()
     
     def game_over(self, event: pygame.event.Event):
         '''Handle the events following the end of game:
@@ -144,16 +141,6 @@ class Game:
 
                 elif self.game_board.board[row, col] == Board.WHITE:
                     self.draw_white_disk(x, y, 33)
-    
-    '''def mark_last_move(self) -> None:
-        ''Mark the last move made on the game board''
-
-        r, c = self.last_move
-
-        x = c * 75 + 100 + 75/2
-        y = r * 75 + 100 + 75/2
-        pygame.draw.circle(self.screen, Colors.RED, (x, y), radius=5)
-        pygame.display.flip()'''
 
     def displayScore(self) -> None:
         '''Display the score text of each player'''
@@ -217,25 +204,14 @@ class Game:
         Game.fade(self.screen, (self.endPromptIMG, (877, 420)))
         self.is_game_over = True
     
-    def computer_turn(self, colour) -> None:
+    def computerPlayerTurn(self) -> None:
         '''Code to run when it is computer player's turn.'''
         
-        if colour == Board.WHITE:
-            # USING RANDOM
-            r, c = random_move(self.game_board)
+        # USING RANDOM
+        r, c = random_move(self.game_board)
 
-            # USING MINIMAX
-            #r, c = minimax_move(self.game_board)
-
-        elif colour == Board.BLACK:
-            # USING RANDOM
-            r, c = random_move(self.game_board, 1)
-
-            # USING MINIMAX
-            #r, c = minimax_move(self.game_board)
-
-        else: raise Exception("computer_turn needs colour argument 1/-1")
-
+        # USING MINIMAX
+        #r, c = minimax_move(self.game_board)
         self.preview_set = False
         
         if (r,c) == (20, 20):
@@ -249,19 +225,17 @@ class Game:
         self.display_disks()
         #self.mark_last_move()
         self.displayScore()
+        # clear previews
+        self.clear_preview
 
     def choose_game_mode(self, event) -> None:
-        ''' Handles the mode choice at main menu, Player VS AI, AI VS AI etc... '''
+        '''Handle the events at the initial screen.'''
 
-        if event.key not in (pygame.K_a, pygame.K_h, pygame.K_b):
+        if event.key not in (pygame.K_a, pygame.K_h):
             return
         
-        # press a to play human vs AI
         self.is_single_player = (event.key == pygame.K_a)
 
-        # press b to play AI vs AI
-        self.computer_vs_computer = (event.key == pygame.K_b)
-        
         self.game_mode_chosen = True
 
         dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
@@ -312,16 +286,9 @@ class Game:
 
             self.displayScore()
 
-            # AI plays white against human
             if self.is_single_player and self.turn == Board.WHITE:
-                self.computer_turn(Board.WHITE)
+                self.computerPlayerTurn()
 
-            if self.computer_vs_computer:
-                self.computer_turn(1)
-                time.sleep(1)
-                self.computer_turn(-1)
-                time.sleep(1)
-            
             self.move_preview()
 
             # game over?

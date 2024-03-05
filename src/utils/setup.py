@@ -2,7 +2,7 @@ from utils.board import Board
 from utils.colors import Colors
 from utils.minimax_AI import minimax_move
 from utils.random_AI import random_move
-import pygame
+import pygame, time
 from pygame import gfxdraw
 
 pygame.init()
@@ -71,7 +71,6 @@ class Game:
         gfxdraw.aacircle(self.screen, x, y, r, Colors.WHITE)
         gfxdraw.filled_circle(self.screen, x, y, r, Colors.WHITE)
 
-
     def do_mouse_click(self) -> None:
         '''Handle events following mouse click on the board'''
 
@@ -96,6 +95,10 @@ class Game:
             pygame.draw.rect(self.screen, self.background, pygame.Rect(x+4, y+4, 67, 67))
 
         self.turn *= -1
+
+        # Update the display after each move
+        self.display_disks()
+        self.displayScore()
     
     def game_over(self, event: pygame.event.Event):
         '''Handle the events following the end of game:
@@ -141,16 +144,6 @@ class Game:
 
                 elif self.game_board.board[row, col] == Board.WHITE:
                     self.draw_white_disk(x, y, 33)
-    
-    '''def mark_last_move(self) -> None:
-        ''Mark the last move made on the game board''
-
-        r, c = self.last_move
-
-        x = c * 75 + 100 + 75/2
-        y = r * 75 + 100 + 75/2
-        pygame.draw.circle(self.screen, Colors.RED, (x, y), radius=5)
-        pygame.display.flip()'''
 
     def displayScore(self) -> None:
         '''Display the score text of each player'''
@@ -169,7 +162,7 @@ class Game:
         pygame.display.flip()
 
     def move_preview(self):
-        '''Display all the possible legal moves for the player with the current turn.'''
+        ''' Display all the possible legal moves for the player with the current turn '''
 
         if self.preview_set:    # possible moves are already displayed
             return
@@ -199,6 +192,17 @@ class Game:
             
         self.preview_set = True
 
+    def clear_preview(self):
+        ''' Draws a rectangle over old move previewed cells in background colour '''
+        
+        possible_moves = self.game_board.all_legal_moves(self.turn)
+        
+        for pos in possible_moves:
+            row, col = pos
+            x = 100 + 75 * col
+            y = 100 + 75 * row
+            pygame.draw.rect(self.screen, self.background, pygame.Rect(x+4, y+4, 67, 67))
+    
     def gameOverScreen(self) -> None:
         '''Display the game over screen in accordance with the game result.'''
 
@@ -214,14 +218,25 @@ class Game:
         Game.fade(self.screen, (self.endPromptIMG, (877, 420)))
         self.is_game_over = True
     
-    def computerPlayerTurn(self) -> None:
+    def computer_turn(self, colour) -> None:
         '''Code to run when it is computer player's turn.'''
         
-        # USING RANDOM
-        r, c = random_move(self.game_board)
+        if colour == Board.WHITE:
+            # USING RANDOM
+            r, c = random_move(self.game_board, -1)
 
-        # USING MINIMAX
-        #r, c = minimax_move(self.game_board)
+            # USING MINIMAX
+            #r, c = minimax_move(self.game_board)
+
+        elif colour == Board.BLACK:
+            # USING RANDOM
+            r, c = random_move(self.game_board, 1)
+
+            # USING MINIMAX
+            #r, c = minimax_move(self.game_board)
+
+        else: raise Exception("computer_turn needs colour argument 1/-1")
+
         self.preview_set = False
         
         if (r,c) == (20, 20):
@@ -231,19 +246,26 @@ class Game:
         self.game_board.set_discs(r, c, self.turn)
         self.turn *= -1
 
+        self.clear_preview
+
+
         # update board visuals
         self.display_disks()
         #self.mark_last_move()
         self.displayScore()
 
     def choose_game_mode(self, event) -> None:
-        '''Handle the events at the initial screen.'''
+        ''' Handles the mode choice at main menu, Player VS AI, AI VS AI etc... '''
 
-        if event.key not in (pygame.K_a, pygame.K_h):
+        if event.key not in (pygame.K_a, pygame.K_h, pygame.K_b):
             return
         
+        # press a to play human vs AI
         self.is_single_player = (event.key == pygame.K_a)
 
+        # press b to play AI vs AI
+        self.computer_vs_computer = (event.key == pygame.K_b)
+        
         self.game_mode_chosen = True
 
         dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
@@ -294,10 +316,20 @@ class Game:
 
             self.displayScore()
 
+            # AI plays white against human
             if self.is_single_player and self.turn == Board.WHITE:
-                self.computerPlayerTurn()
+                self.computer_turn(Board.WHITE)
 
-            self.move_preview()
+            # AI plays black & white w/ arbitrary slowdown factor
+            if self.computer_vs_computer:
+                self.computer_turn(1)
+                time.sleep(0.5)
+                self.computer_turn(-1)
+                time.sleep(0.5)
+            
+            # only need previews for humans
+            if self.is_single_player:
+                self.move_preview()
 
             # game over?
             if self.game_board.is_game_over():
