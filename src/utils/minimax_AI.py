@@ -58,7 +58,9 @@ def minimax_move(position: Board) -> tuple[int, int]:
             position_deepcopy.set_discs(row, col, Board.WHITE)
 
             opponents_moves = position_deepcopy.all_legal_moves(Board.BLACK)
-            currentEval = minimax(position_deepcopy, 3, float('-inf'), float('inf'), opponents_moves != set())
+            
+            # minimax call
+            currentEval = minimax(position_deepcopy, 2, float('-inf'), float('inf'), opponents_moves != set())
 
             if currentEval <= bestEval:
                 bestMove = (row, col)
