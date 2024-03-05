@@ -1,7 +1,7 @@
 from utils.board import Board
 import random
 
-def random_move_old(position: Board) -> tuple[int, int]:
+def random_move_older(position: Board) -> tuple[int, int]:
 
     legal_moves = position.all_legal_moves(Board.WHITE)
 
@@ -9,15 +9,15 @@ def random_move_old(position: Board) -> tuple[int, int]:
 
     return random_move
 
-def random_move(position: Board, colour: int) -> tuple[int, int]:
+def random_move_old(position: Board, player_colour: int) -> tuple[int, int]:
 
     # random player is white
-    if colour is -1:
+    if player_colour is -1:
 
         legal_moves = position.all_legal_moves(Board.WHITE)
 
     # random player is black
-    elif colour is 1:
+    elif player_colour is 1:
 
         legal_moves = position.all_legal_moves(Board.BLACK)
 
@@ -27,3 +27,18 @@ def random_move(position: Board, colour: int) -> tuple[int, int]:
     random_move = random.choice(list(legal_moves))
 
     return random_move
+
+def random_move(position: Board, player_colour: int) -> tuple[int, int]:
+    
+    # check if game over
+    if position.is_game_over() is True:
+        return (20,20)
+
+
+    legal_moves = position.all_legal_moves(player_colour)
+    if legal_moves:
+        random_move = random.choice(list(legal_moves))
+        return random_move
+    else: return (20,20)
+    
+    
