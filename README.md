@@ -1,9 +1,9 @@
 <h1 align="center">⚫ Othello/Reversi ⚪ </h1>
 
-A GUI-equipped, [Othello/Reversi](https://www.worldothello.org/about/about-othello/othello-rules/official-rules/english) game made in **Python3** using the `pygame` library. Featuring two-player as well as Play with Computer modes.
+A GUI-equipped, [Othello/Reversi](https://www.worldothello.org/about/about-othello/othello-rules/official-rules/english) game made in **Python3** using the `pygame` library. Featuring PvP as well as AI.
 
-## 📜 Description
-Othello is a board-game played on a 8x8 board, with 64 discs that are black on one side and white on the other. Each player gets 32 such discs, out of which 2 from each player are kept on the board in the following manner:
+## Description
+Reversi is played on an 8x8 board, with 64 discs that are black on one side and white on the other. Each player gets 32 such discs, out of which 2 from each player are kept on the board in the following manner:
 
 ![image](https://github.com/TERNION-1121/Othello-Reversi-Game/assets/97667653/ea03fdd8-9abc-4b14-bdc9-7d983fb38041)
 
