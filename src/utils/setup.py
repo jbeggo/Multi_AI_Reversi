@@ -218,24 +218,14 @@ class Game:
         Game.fade(self.screen, (self.endPromptIMG, (877, 420)))
         self.is_game_over = True
     
-    def computer_turn(self, colour) -> None:
-        '''Code to run when it is computer player's turn.'''
+    def random_AI_turn(self, colour) -> None:
+        ''' Code to run when it is (random strategy) computer player's turn '''
         
         if colour == Board.WHITE:
-            # USING RANDOM
             r, c = random_move(self.game_board, -1)
-
-            # USING MINIMAX
-            #r, c = minimax_move(self.game_board)
-
         elif colour == Board.BLACK:
-            # USING RANDOM
             r, c = random_move(self.game_board, 1)
-
-            # USING MINIMAX
-            #r, c = minimax_move(self.game_board)
-
-        else: raise Exception("computer_turn needs colour argument 1/-1")
+        else: raise Exception("random_AI_turn needs colour argument 1/-1")
 
         self.preview_set = False
         
@@ -248,6 +238,31 @@ class Game:
 
         self.clear_preview
 
+
+        # update board visuals
+        self.display_disks()
+        #self.mark_last_move()
+        self.displayScore()
+
+    def minimax_AI_turn(self, colour) -> None:
+        ''' Code to run when it is (minimax strategy) computer player's turn '''
+        
+        if colour == Board.WHITE:
+            r, c = minimax_move(self.game_board)
+        elif colour == Board.BLACK:
+            r, c = minimax_move(self.game_board)
+        else: raise Exception("minimax needs colour argument 1/-1")
+
+        self.preview_set = False
+        
+        if (r,c) == (20, 20):
+            return
+        
+        self.last_move = (r, c)
+        self.game_board.set_discs(r, c, self.turn)
+        self.turn *= -1
+
+        self.clear_preview
 
         # update board visuals
         self.display_disks()
@@ -318,13 +333,13 @@ class Game:
 
             # AI plays white against human
             if self.is_single_player and self.turn == Board.WHITE:
-                self.computer_turn(Board.WHITE)
+                self.random_AI_turn(Board.WHITE)
 
             # AI plays black & white w/ arbitrary slowdown factor
             if self.computer_vs_computer:
-                self.computer_turn(1)
+                self.random_AI_turn(1)
                 time.sleep(0.5)
-                self.computer_turn(-1)
+                self.minimax_AI_turn(-1)
                 time.sleep(0.5)
             
             # only need previews for humans
