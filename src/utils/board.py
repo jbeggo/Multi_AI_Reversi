@@ -132,27 +132,39 @@ class Board:
             return False
         return True
     
-    def evaluate_board(self) -> int:
+    def evaluate_board(self, player) -> int:
         '''Evaluate the board as per coin parity, mobility & corner value heuristics.'''
 
-        # coin parity heuristic
-        coin_parity = 100 * (self.black_disk_count - self.white_disk_count) / (self.black_disk_count + self.white_disk_count)
+        # coin parity heuristic - difference in number of disks for player
+        if player == Board.BLACK:
+            coin_parity = 100 * (self.black_disk_count - self.white_disk_count) / (self.black_disk_count + self.white_disk_count)
+        else:
+            coin_parity = 100 * (self.white_disk_count - self.black_disk_count) / (self.black_disk_count + self.white_disk_count)
         
-        # mobility heuristic value
+        # mobility heuristic - empty space a player can move into
         black_mobility = len(self.all_legal_moves(Board.BLACK))
         white_mobility = len(self.all_legal_moves(Board.WHITE))
         if black_mobility + white_mobility == 0:
             actual_mobility = 0
         else:
-            actual_mobility = 100 * (black_mobility - white_mobility) / (black_mobility + white_mobility)
-
-        # corner heuristic value
+            # evaluate for given player
+            if player == Board.BLACK:
+                actual_mobility = 100 * (black_mobility - white_mobility) / (black_mobility + white_mobility)
+            else:
+                actual_mobility = 100 * (white_mobility - black_mobility) / (black_mobility + white_mobility)
+        
+        # corner heuristic - corners cannot be flipped once set
         corners = (self.board[0, 0], self.board[0,7], self.board[7, 0], self.board[7, 7])
-        black_corners = sum(+20 for coin in corners if coin == Board.BLACK)
-        white_corners = sum(-20 for coin in corners if coin == Board.WHITE)
-        if black_corners + white_corners == 0:
+        if player == Board.BLACK:
+            player_corners = sum(+20 for coin in corners if coin == Board.BLACK)
+            opponent_corners = sum(-20 for coin in corners if coin == Board.WHITE)
+        else:
+            player_corners = sum(+20 for coin in corners if coin == Board.WHITE)
+            opponent_corners = sum(-20 for coin in corners if Board.BLACK)
+
+        if player_corners + opponent_corners == 0:
             corner_value = 0
         else:
-            corner_value = 100 * (black_corners - white_corners) / (black_corners + white_corners)
+            corner_value = 100 * (player_corners - opponent_corners) / (player_corners + opponent_corners)
 
         return coin_parity + actual_mobility + corner_value

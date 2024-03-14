@@ -361,9 +361,9 @@ class Game:
             # AI plays black & white w/ arbitrary slowdown factor
             if self.computer_vs_computer:
                 self.greedy_AI_turn(1)
-                time.sleep(0.5)
+                time.sleep(0.2)
                 self.minimax_AI_turn(-1)
-                time.sleep(0.5)
+                time.sleep(0.2)
             
             # only need previews for humans
             if self.is_single_player:

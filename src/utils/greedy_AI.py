@@ -12,7 +12,7 @@ def greedy_move(position: Board, player_color: int) -> tuple[int, int]:
         if position.board[row, col] == Board.EMPTY:
             position_deepcopy = deepcopy(position)
             position_deepcopy.set_discs(row, col, player_color)
-            eval = position_deepcopy.evaluate_board()
+            eval = position_deepcopy.evaluate_board(player_color)
             if eval >= best_eval:
                 best_move = (row, col)
                 best_eval = eval

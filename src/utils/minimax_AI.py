@@ -5,7 +5,7 @@ def minimax(position: Board, depth: int, alpha: int, beta: int, isMaximizingPlay
     
     # Check for game over or no depth set
     if depth == 0 or position.is_game_over() is True:
-        return position.evaluate_board()
+        return position.evaluate_board(Board.WHITE)
     
     if isMaximizingPlayer:
         maxEval = float('-inf')
