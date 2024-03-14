@@ -133,7 +133,7 @@ class Board:
         return True
     
     def evaluate_board(self) -> int:
-        '''Evaluate the board as per various heuristics.'''
+        '''Evaluate the board as per coin parity, mobility & corner value heuristics.'''
 
         # coin parity heuristic
         coin_parity = 100 * (self.black_disk_count - self.white_disk_count) / (self.black_disk_count + self.white_disk_count)

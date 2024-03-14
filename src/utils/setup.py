@@ -2,6 +2,7 @@ from utils.board import Board
 from utils.colors import Colors
 from utils.minimax_AI import minimax_move
 from utils.random_AI import random_move
+from utils.greedy_AI import greedy_move
 import pygame, time
 from pygame import gfxdraw
 
@@ -244,6 +245,28 @@ class Game:
         #self.mark_last_move()
         self.displayScore()
 
+    def greedy_AI_turn(self, colour) -> None:
+        ''' Code to run when it is (basic greedy) computer player's turn '''
+        
+        r, c = greedy_move(self.game_board, colour)
+        
+
+        self.preview_set = False
+        
+        if (r,c) == (20, 20):
+            return
+        
+        self.last_move = (r, c)
+        self.game_board.set_discs(r, c, self.turn)
+        self.turn *= -1
+
+        self.clear_preview
+
+        # update board visuals
+        self.display_disks()
+        #self.mark_last_move()
+        self.displayScore()
+
     def minimax_AI_turn(self, colour) -> None:
         ''' Code to run when it is (minimax strategy) computer player's turn '''
         
@@ -337,7 +360,7 @@ class Game:
 
             # AI plays black & white w/ arbitrary slowdown factor
             if self.computer_vs_computer:
-                self.random_AI_turn(1)
+                self.greedy_AI_turn(1)
                 time.sleep(0.5)
                 self.minimax_AI_turn(-1)
                 time.sleep(0.5)
