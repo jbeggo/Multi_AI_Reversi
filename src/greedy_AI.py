@@ -1,4 +1,4 @@
-from utils.board import Board
+from board import Board
 from copy import deepcopy
 
 def greedy_move(position: Board, player_color: int) -> tuple[int, int]:
@@ -11,7 +11,7 @@ def greedy_move(position: Board, player_color: int) -> tuple[int, int]:
     for row, col in legal_moves:
         if position.board[row, col] == Board.EMPTY:
             position_deepcopy = deepcopy(position)
-            position_deepcopy.set_discs(row, col, player_color)
+            position_deepcopy.make_move(row, col, player_color)
             eval = position_deepcopy.evaluate_board(player_color)
             if eval >= best_eval:
                 best_move = (row, col)

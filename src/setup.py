@@ -1,8 +1,8 @@
-from utils.board import Board
-from utils.colors import Colors
-from utils.minimax_AI import minimax_move
-from utils.random_AI import random_move
-from utils.greedy_AI import greedy_move
+from board import Board
+from colors import Colors
+from minimax_AI import minimax_move
+from random_AI import random_move
+from greedy_AI import greedy_move
 import pygame, time
 from pygame import gfxdraw
 
@@ -36,7 +36,7 @@ class Game:
         self.endScreenDrawIMG = pygame.image.load("images/Draw_Win_Screen.png")
 
         self.endPromptIMG  = pygame.image.load("images/Replay_Prompt.png")
-        self.choiceIMG = pygame.image.load("images/Game_Mode_Prompt.png")
+        self.choiceIMG = pygame.image.load("images/splash.png")
 
         # Load font that displays the score
         self.scoreFont = pygame.font.Font("Gotham-Font/GothamLight.ttf", 40)
@@ -85,7 +85,7 @@ class Game:
         if (r, c) not in possible_moves:   return
 
         self.last_move = (r, c)
-        self.game_board.set_discs(r, c, self.turn)
+        self.game_board.make_move(r, c, self.turn)
         self.preview_set = False
 
         # draws over old move previews
@@ -234,7 +234,7 @@ class Game:
             return
         
         self.last_move = (r, c)
-        self.game_board.set_discs(r, c, self.turn)
+        self.game_board.make_move(r, c, self.turn)
         self.turn *= -1
 
         self.clear_preview
@@ -257,7 +257,7 @@ class Game:
             return
         
         self.last_move = (r, c)
-        self.game_board.set_discs(r, c, self.turn)
+        self.game_board.make_move(r, c, self.turn)
         self.turn *= -1
 
         self.clear_preview
@@ -282,7 +282,7 @@ class Game:
             return
         
         self.last_move = (r, c)
-        self.game_board.set_discs(r, c, self.turn)
+        self.game_board.make_move(r, c, self.turn)
         self.turn *= -1
 
         self.clear_preview

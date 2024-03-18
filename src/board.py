@@ -36,7 +36,18 @@ class Board:
 
         return (x >= 0 and y >= 0) and (x < 8 and y < 8)
 
-    def all_legal_moves(self, PLAYER: int) -> set:
+    def all_legal_moves(self, PLAYER: int) -> list:
+        '''Return all legal moves for the player'''
+
+        all_legal_moves = []
+        for row in range(8):
+            for col in range(8):
+                if self.board[row, col] == PLAYER:
+                    all_legal_moves.extend(self.legal_moves(row, col))
+        
+        return all_legal_moves
+
+    def all_legal_moves_old(self, PLAYER: int) -> set:
         '''Return all legal moves for the player'''
 
         all_legal_moves = set()
@@ -72,8 +83,26 @@ class Board:
 
         return legal_moves
 
+    def print_board(self) -> None:
+        '''Print the current state of the board in a readable format'''
+
+        print() # leave a gap
+        for row in self.board:
+            for cell in row:
+                if cell == Board.WHITE:
+                    print("W", end=" ")
+                elif cell == Board.BLACK:
+                    print("B", end=" ")
+                else:
+                    print(".", end=" ")
+            print()
+
+    def print_score(self) -> str:
+        ''' Return the current score in the form of "White: x, Black: x" '''
+        return f"White: {self.white_disk_count}, Black: {self.black_disk_count}"
+
     def flip_disks(self, PLAYER: int, initCoords: tuple[int, int], endCoords: tuple[int, int], direction: tuple[int, int]):
-        '''Flip the discs between the given two cells to the given PLAYER color.'''
+        '''Flip the disks between the given two cells to the given PLAYER color.'''
 
         OPPONENT = PLAYER * -1
         rowDir, colDir = direction
@@ -89,8 +118,8 @@ class Board:
             row += rowDir
             col += colDir
 
-    def set_discs(self, row: int, col: int, PLAYER: int) -> None:
-        ''' Set the discs on the board as per the move made on the given cell '''
+    def make_move(self, row: int, col: int, PLAYER: int) -> None:
+        ''' Set the disks on the board as per the move made on the given cell '''
         
         self.board[row, col] = PLAYER
         OPPONENT = PLAYER * - 1
@@ -116,6 +145,13 @@ class Board:
         self.white_disk_count = -self.board[self.board < 0].sum()
 
     def reset_board(self) -> None:
+        """
+        Reset the game board to its initial state.
+
+        This method fills the board with empty squares and initializes the center squares
+        with two white and two black disks
+
+        """
         self.board.fill(Board.EMPTY)
 
         # initiliasing the centre squares
@@ -128,9 +164,11 @@ class Board:
         possible_black_moves = self.all_legal_moves(Board.BLACK)
         possible_white_moves = self.all_legal_moves(Board.WHITE)
 
-        if possible_black_moves or possible_white_moves:
-            return False
-        return True
+        # no moves left to make for either player means game over
+        if not possible_black_moves and not possible_white_moves:
+            return True
+        
+        return False
     
     def evaluate_board(self, player) -> int:
         '''Evaluate the board as per coin parity, mobility & corner value heuristics.'''

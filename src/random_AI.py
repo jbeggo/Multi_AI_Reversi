@@ -1,11 +1,11 @@
-from utils.board import Board
+from board import Board
 import random
 
 def random_move_older(position: Board) -> tuple[int, int]:
 
     legal_moves = position.all_legal_moves(Board.WHITE)
 
-    random_move = random.choice(list(legal_moves))
+    random_move = random.choice(legal_moves)
 
     return random_move
 
@@ -37,7 +37,7 @@ def random_move(position: Board, player_colour: int) -> tuple[int, int]:
 
     legal_moves = position.all_legal_moves(player_colour)
     if legal_moves:
-        random_move = random.choice(list(legal_moves))
+        random_move = random.choice(legal_moves)
         return random_move
     else: return (20,20)
     
