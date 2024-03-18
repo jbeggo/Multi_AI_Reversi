@@ -20,18 +20,18 @@ for _ in range(1000):  # Play x turns
         best_next_move = monte_carlo_tree_search(root, num_iterations=500)
         board = best_next_move.board'''
         
-        row, col = minimax_move(board)
+        row, col = random_move(board, Board.BLACK)
         if row is not None and col is not None:
             board.make_move(row, col, Board.BLACK)
         else:
-            print("Minimax player has no legal moves. Skipping turn.")
+            print("Random player has no legal moves. Skipping turn.")
 
     else:  # other player's turn
-        row, col = random_move(board, Board.WHITE)
+        row, col = minimax_move(board)
         if row is not None and col is not None:
             board.make_move(row, col, Board.WHITE)
         else:
-            print("Random player has no legal moves. Skipping turn.")
+            print("Minimax player has no legal moves. Skipping turn.")
 
     player = Board.BLACK if player == Board.WHITE else Board.WHITE  # Switch players
     board.print_board()  # Print the board

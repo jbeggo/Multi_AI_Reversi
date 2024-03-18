@@ -4,7 +4,7 @@ from copy import deepcopy
 def greedy_move(position: Board, player_color: int) -> tuple[int, int]:
     
     # initialise
-    best_move = (20, 20)
+    best_move = (None, None)
     best_eval = 0
 
     legal_moves = position.all_legal_moves(player_color)

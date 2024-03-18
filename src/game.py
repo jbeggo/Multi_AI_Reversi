@@ -267,14 +267,14 @@ class Game:
         #self.mark_last_move()
         self.displayScore()
 
-    def minimax_AI_turn(self, colour) -> None:
+    def minimax_AI_turn(self, turn) -> None:
         ''' Code to run when it is (minimax strategy) computer player's turn '''
         
-        if colour == Board.WHITE:
+        if turn == Board.WHITE:
             r, c = minimax_move(self.game_board)
-        elif colour == Board.BLACK:
+        elif turn == Board.BLACK:
             r, c = minimax_move(self.game_board)
-        else: raise Exception("minimax needs colour argument 1/-1")
+        else: raise Exception("Minimax needs colour argument 1/-1")
 
         self.preview_set = False
         

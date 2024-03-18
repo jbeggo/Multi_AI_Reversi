@@ -4,10 +4,11 @@ import random
 import copy
 
 class Node:
-    def __init__(self, board, player, parent=None):
+    def __init__(self, board, player,last_move=None, parent=None):
         # board is more generic state in other MCTS implementations
         self.board = copy.deepcopy(board)
         self.player = player
+        self.last_move = last_move
         self.parent = parent
         self.children = []
         self.visit_count = 0
@@ -41,7 +42,7 @@ def expand(node):
     for row, col in possible_moves:
         new_board = copy.deepcopy(node.board)  
         new_board.make_move(row, col, node.player)
-        new_node = Node(new_board, (-1 * node.player), parent=node)
+        new_node = Node(new_board, (-1 * node.player),last_move=(row,col), parent=node)
         node.children.append(new_node)
 
 def backpropagate(node, score):
@@ -73,3 +74,9 @@ def monte_carlo_tree_search(root, num_iterations):
         score = simulate(node)
         backpropagate(node, score)
     return max(root.children, key=lambda n: n.visit_count)
+
+def mcts_move(board: Board, player_color: int) -> tuple[int, int]:
+    ''' Return best move for given player using MCTS '''
+    root = Node(board, player_color)
+    best_next_move = monte_carlo_tree_search(root, num_iterations=500)
+    return best_next_move.board.last_move
