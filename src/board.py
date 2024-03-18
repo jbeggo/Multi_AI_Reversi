@@ -160,7 +160,7 @@ class Board:
 
         self.black_disk_count = self.white_disk_count = 2
 
-    def is_game_over(self) -> bool:
+    def is_game_over_old(self) -> bool:
         possible_black_moves = self.all_legal_moves(Board.BLACK)
         possible_white_moves = self.all_legal_moves(Board.WHITE)
 
@@ -170,6 +170,11 @@ class Board:
         
         return False
     
+    def is_game_over(self) -> bool:
+        '''Return True if the game is over (i.e., neither player can make a move), False otherwise'''
+
+        return len(self.all_legal_moves(Board.BLACK)) == 0 and len(self.all_legal_moves(Board.WHITE)) == 0
+
     def evaluate_board(self, player) -> int:
         '''Evaluate the board as per coin parity, mobility & corner value heuristics.'''
 

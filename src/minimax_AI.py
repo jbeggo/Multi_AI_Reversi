@@ -47,7 +47,7 @@ def minimax(position: Board, depth: int, alpha: int, beta: int, isMaximizingPlay
 
 def minimax_move(position: Board) -> tuple[int, int]:
 
-    bestMove = (20, 20)
+    bestMove = (None,None)
     bestEval = float('+inf')
 
     legal_moves = position.all_legal_moves(Board.WHITE)

@@ -230,7 +230,7 @@ class Game:
 
         self.preview_set = False
         
-        if (r,c) == (20, 20):
+        if (r,c) == (None, None):
             return
         
         self.last_move = (r, c)
@@ -278,7 +278,8 @@ class Game:
 
         self.preview_set = False
         
-        if (r,c) == (20, 20):
+        # cannot move
+        if (r,c) == (None,None):
             return
         
         self.last_move = (r, c)
