@@ -99,7 +99,7 @@ class Board:
 
     def print_score(self) -> str:
         ''' Return the current score in the form of "White: x, Black: x" '''
-        return f"White: {self.white_disk_count}, Black: {self.black_disk_count}"
+        print(f"White: {self.white_disk_count}, Black: {self.black_disk_count}")
 
     def flip_disks(self, PLAYER: int, initCoords: tuple[int, int], endCoords: tuple[int, int], direction: tuple[int, int]):
         '''Flip the disks between the given two cells to the given PLAYER color.'''

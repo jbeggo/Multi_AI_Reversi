@@ -73,10 +73,16 @@ def monte_carlo_tree_search(root, num_iterations):
         expand(node)
         score = simulate(node)
         backpropagate(node, score)
-    return max(root.children, key=lambda n: n.visit_count)
+    if root.children: #is not empty
+        return max(root.children, key=lambda n: n.visit_count)
+    else:
+        return [None, None]
 
 def mcts_move(board: Board, player_color: int) -> tuple[int, int]:
     ''' Return best move for given player using MCTS '''
     root = Node(board, player_color)
-    best_next_move = monte_carlo_tree_search(root, num_iterations=500)
-    return best_next_move.board.last_move
+    best_next_state = monte_carlo_tree_search(root, num_iterations=250)
+    if best_next_state == [None, None]: #if player cannot move
+        return [None, None]
+    else: 
+        return best_next_state.last_move
