@@ -1,8 +1,10 @@
 from board import Board
 from colors import Colors
-from minimax_AI import minimax_move
+from minimax_AI import minimax_move, minimax_simple_move
 from random_AI import random_move
 from greedy_AI import greedy_move
+from negamax_AI import negamax_move
+from MCTS_AI import mcts_move
 import pygame, time
 from pygame import gfxdraw
 
@@ -36,17 +38,22 @@ class Game:
         self.endScreenDrawIMG = pygame.image.load("images/Draw_Win_Screen.png")
 
         self.endPromptIMG  = pygame.image.load("images/Replay_Prompt.png")
-        self.choiceIMG = pygame.image.load("images/splash.png")
+        self.menuIMG = pygame.image.load("images/main_menu.png")
+        self.choose_opponentIMG = pygame.image.load("images/choose_AI.png")
 
         # Load font that displays the score
         self.scoreFont = pygame.font.Font("Gotham-Font/GothamLight.ttf", 40)
 
         self.is_single_player = False
+        self.computer_vs_computer = False
+        self.player_vs_player = False
         self.game_mode_chosen = False
+        self.opponent_chosen = False
+        self.chosen_AI = None
 
         self.running = True
         
-        self.is_game_over = False #just declaring
+        self.is_game_over = False
         self.preview_set = False
 
         self.turn = 1 #black player always starts
@@ -124,7 +131,9 @@ class Game:
         self.is_single_player = False
         self.game_mode_chosen = False
         self.is_game_over = False
-        self.game_board.reset_board()
+        self.opponent_chosen = False
+        self.chosen_AI = None
+        self.game_board = Board() # create a new fresh board
 
         self.displayInitialBoardPos()
         self.last_move = (0,0)
@@ -204,7 +213,7 @@ class Game:
             y = 100 + 75 * row
             pygame.draw.rect(self.screen, self.background, pygame.Rect(x+4, y+4, 67, 67))
     
-    def gameOverScreen(self) -> None:
+    def game_over_screen(self) -> None:
         '''Display the game over screen in accordance with the game result.'''
 
         if self.game_board.black_disk_count > self.game_board.white_disk_count: # black won
@@ -289,6 +298,40 @@ class Game:
         #self.mark_last_move()
         self.displayScore()
 
+    def computer_turn(self, player, chosen_AI) -> None:
+        ''' Code to run when computer player's turn '''
+        
+        # determine the move based on the chosen AI
+        if chosen_AI == "random":
+            r, c = random_move(self.game_board, player)
+        elif chosen_AI == "greedy":
+            r, c = greedy_move(self.game_board, player)
+        elif chosen_AI == "negamax":
+            r, c = negamax_move(self.game_board, player)
+        elif chosen_AI == "simple minimax":
+            r, c = minimax_simple_move(self.game_board, player)
+        elif chosen_AI == "minimax":
+            r, c = minimax_move(self.game_board, player)
+        elif chosen_AI == "mcts":
+            r, c = mcts_move(self.game_board, player)
+
+        self.preview_set = False
+        
+        # cannot move (skip)
+        if (r,c) == (None,None):
+            return
+        
+        self.last_move = (r, c)
+        self.game_board.make_move(r, c, self.turn)
+        self.turn *= -1
+
+        self.clear_preview
+
+        # update board visuals
+        self.display_disks()
+        #self.mark_last_move()
+        self.displayScore()
+
     def choose_game_mode(self, event) -> None:
         ''' Handles the mode choice at main menu, Player VS AI, AI VS AI etc... '''
 
@@ -302,6 +345,34 @@ class Game:
         self.computer_vs_computer = (event.key == pygame.K_b)
         
         self.game_mode_chosen = True
+
+        dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
+                                        Game.WINDOW_HEIGHT  ))
+        dummy_surface.fill(self.background)
+        Game.fade(self.screen, (dummy_surface, (0, 0)))
+
+        #self.displayInitialBoardPos()
+    
+    def choose_opponent(self, event) -> None:
+        ''' Handles the choice of AI opponent for Player Vs AI mode '''
+
+        if event.key not in (range(pygame.K_1, pygame.K_7)): # if not number key pressed
+            return
+        
+        if event.key == pygame.K_1:
+            self.chosen_AI = "random"
+        elif event.key == pygame.K_2:
+            self.chosen_AI = "greedy"
+        elif event.key == pygame.K_3:
+            self.chosen_AI = "negamax"
+        elif event.key == pygame.K_4:
+            self.chosen_AI = "simple minimax"
+        elif event.key == pygame.K_5:
+            self.chosen_AI = "minimax"
+        elif event.key == pygame.K_6:
+            self.chosen_AI = "mcts"
+        
+        self.opponent_chosen = True
 
         dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
                                         Game.WINDOW_HEIGHT  ))
@@ -338,8 +409,14 @@ class Game:
                 elif not self.game_mode_chosen and event.type == pygame.KEYDOWN:
                     self.choose_game_mode(event)
 
+                elif not self.opponent_chosen and event.type == pygame.KEYDOWN:
+                    self.choose_opponent(event)
+
             if not self.game_mode_chosen:
-                self.screen.blit(self.choiceIMG, (0,0))
+                self.screen.blit(self.menuIMG, (0,0))
+                continue
+            elif not self.opponent_chosen:
+                self.screen.blit(self.choose_opponentIMG, (0,0))
                 continue
 
             if self.is_game_over:
@@ -351,9 +428,9 @@ class Game:
 
             self.displayScore()
 
-            # AI plays white against human
+            # Chosen AI plays white against human
             if self.is_single_player and self.turn == Board.WHITE:
-                self.random_AI_turn(Board.WHITE)
+                self.computer_turn(Board.WHITE,self.chosen_AI)
 
             # AI plays black & white w/ arbitrary slowdown factor
             if self.computer_vs_computer:
@@ -368,6 +445,6 @@ class Game:
 
             # game over?
             if self.game_board.is_game_over():
-                self.gameOverScreen()
+                self.game_over_screen()
 
         pygame.quit()

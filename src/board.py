@@ -160,15 +160,6 @@ class Board:
 
         self.black_disk_count = self.white_disk_count = 2
 
-    def is_game_over_old(self) -> bool:
-        possible_black_moves = self.all_legal_moves(Board.BLACK)
-        possible_white_moves = self.all_legal_moves(Board.WHITE)
-
-        # no moves left to make for either player means game over
-        if not possible_black_moves and not possible_white_moves:
-            return True
-        
-        return False
     
     def is_game_over(self) -> bool:
         '''Return True if the game is over (i.e., neither player can make a move), False otherwise'''
