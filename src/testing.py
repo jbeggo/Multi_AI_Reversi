@@ -8,7 +8,7 @@ board = Board()  # Initialize a new game board
 
 player = Board.BLACK  # Black starts 
 
-for _ in range(1000):  # Play x turns
+for _ in range(1000):  # Play until game end
     
     if board.is_game_over():
         break
@@ -19,10 +19,10 @@ for _ in range(1000):  # Play x turns
         if row is not None and col is not None:
             board.make_move(row, col, Board.BLACK)
         else:
-            print("Random player has no legal moves. Skipping turn.")
+            print("MCTS player has no legal moves. Skipping turn.")
 
     else:  # Minimax's turn
-        row, col = minimax_move(board)
+        row, col = minimax_move(board, Board.WHITE)
         if row is not None and col is not None:
             board.make_move(row, col, Board.WHITE)
         else:

@@ -184,7 +184,7 @@ class Board:
         else:
             coin_parity = 100 * (self.white_disk_count - self.black_disk_count) / (self.black_disk_count + self.white_disk_count)
         
-        # mobility heuristic - empty space a player can move into
+        # mobility heuristic - number of empty spaces a player could move into
         black_mobility = len(self.all_legal_moves(Board.BLACK))
         white_mobility = len(self.all_legal_moves(Board.WHITE))
         if black_mobility + white_mobility == 0:

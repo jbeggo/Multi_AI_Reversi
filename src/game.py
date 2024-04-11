@@ -219,12 +219,12 @@ class Game:
         Game.fade(self.screen, (self.endPromptIMG, (877, 420)))
         self.is_game_over = True
     
-    def random_AI_turn(self, colour) -> None:
+    def random_AI_turn(self, player) -> None:
         ''' Code to run when it is (random strategy) computer player's turn '''
         
-        if colour == Board.WHITE:
+        if player == Board.WHITE:
             r, c = random_move(self.game_board, -1)
-        elif colour == Board.BLACK:
+        elif player == Board.BLACK:
             r, c = random_move(self.game_board, 1)
         else: raise Exception("random_AI_turn needs colour argument 1/-1")
 
@@ -245,10 +245,10 @@ class Game:
         #self.mark_last_move()
         self.displayScore()
 
-    def greedy_AI_turn(self, colour) -> None:
+    def greedy_AI_turn(self, player) -> None:
         ''' Code to run when it is (basic greedy) computer player's turn '''
         
-        r, c = greedy_move(self.game_board, colour)
+        r, c = greedy_move(self.game_board, player)
         
 
         self.preview_set = False
@@ -267,14 +267,10 @@ class Game:
         #self.mark_last_move()
         self.displayScore()
 
-    def minimax_AI_turn(self, turn) -> None:
+    def minimax_AI_turn(self, player) -> None:
         ''' Code to run when it is (minimax strategy) computer player's turn '''
         
-        if turn == Board.WHITE:
-            r, c = minimax_move(self.game_board)
-        elif turn == Board.BLACK:
-            r, c = minimax_move(self.game_board)
-        else: raise Exception("Minimax needs colour argument 1/-1")
+        r, c = minimax_move(self.game_board, player)
 
         self.preview_set = False
         
@@ -361,9 +357,9 @@ class Game:
 
             # AI plays black & white w/ arbitrary slowdown factor
             if self.computer_vs_computer:
-                self.greedy_AI_turn(1)
+                self.greedy_AI_turn(Board.BLACK)
                 time.sleep(0.2)
-                self.minimax_AI_turn(-1)
+                self.minimax_AI_turn(Board.WHITE)
                 time.sleep(0.2)
             
             # only need previews for humans
