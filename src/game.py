@@ -1,5 +1,5 @@
 from board import Board
-from colors import Colors
+from colors import Colours
 from minimax_AI import minimax_move, minimax_simple_move
 from random_AI import random_move
 from greedy_AI import greedy_move
@@ -26,7 +26,7 @@ class Game:
 
         # pygame window setup: set size, colours, window title
         self.screen = pygame.display.set_mode((Game.WINDOW_WIDTH, Game.WINDOW_HEIGHT))
-        self.screen.fill(Colors.WHITE)
+        self.screen.fill(Colours.WHITE)
         pygame.display.flip() # 'flip' is full display update
         pygame.display.set_caption("Reversi AI")
 
@@ -72,12 +72,12 @@ class Game:
             pygame.display.flip()        
 
     def draw_black_disk(self, x: int, y: int, r: int):
-        gfxdraw.aacircle(self.screen, x, y, r, Colors.BLACK)
-        gfxdraw.filled_circle(self.screen, x, y, r, Colors.BLACK)
+        gfxdraw.aacircle(self.screen, x, y, r, Colours.BLACK)
+        gfxdraw.filled_circle(self.screen, x, y, r, Colours.BLACK)
    
     def draw_white_disk(self, x: int, y: int, r: int):
-        gfxdraw.aacircle(self.screen, x, y, r, Colors.WHITE)
-        gfxdraw.filled_circle(self.screen, x, y, r, Colors.WHITE)
+        gfxdraw.aacircle(self.screen, x, y, r, Colours.WHITE)
+        gfxdraw.filled_circle(self.screen, x, y, r, Colours.WHITE)
 
     def do_mouse_click(self) -> None:
         '''Handle events following mouse click on the board'''
@@ -163,7 +163,7 @@ class Game:
         self.screen.blit(dummy_surface, (885, 510))
         self.screen.blit(dummy_surface, (1060, 510))
 
-        text_color = Colors.BLACK
+        text_color = Colours.BLACK
         black_disc_count = self.scoreFont.render(f"{self.game_board.black_disk_count}", True, text_color)
         white_disc_count = self.scoreFont.render(f"{self.game_board.white_disk_count}", True, text_color)
         self.screen.blit(black_disc_count, (885, 510))
@@ -192,11 +192,11 @@ class Game:
             y = 100 + 75 * r
 
             if self.turn == Board.BLACK:
-                pygame.draw.circle(surface,(*Colors.BLACK, 50),(37.5, 37.5), 32.5)
+                pygame.draw.circle(surface,(*Colours.BLACK, 50),(37.5, 37.5), 32.5)
 
             elif self.turn == Board.WHITE:
-                pygame.draw.circle(surface,(*Colors.BLACK, 50),(37.5, 37.5), 32.5)
-                pygame.draw.circle(surface,(*Colors.WHITE, 50),(37.5, 37.5), 30)
+                pygame.draw.circle(surface,(*Colours.BLACK, 50),(37.5, 37.5), 32.5)
+                pygame.draw.circle(surface,(*Colours.WHITE, 50),(37.5, 37.5), 30)
 
             self.screen.blit(surface, (x, y))
             

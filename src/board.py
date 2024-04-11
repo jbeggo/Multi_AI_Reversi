@@ -143,24 +143,7 @@ class Board:
         # update disc counters
         self.black_disk_count = self.board[self.board > 0].sum()
         self.white_disk_count = -self.board[self.board < 0].sum()
-
-    def reset_board(self) -> None:
-        """
-        Reset the game board to its initial state.
-
-        This method fills the board with empty squares and initializes the center squares
-        with two white and two black disks
-
-        """
-        self.board.fill(Board.EMPTY)
-
-        # initiliasing the centre squares
-        self.board[3, 3] = self.board[4,4] = Board.WHITE
-        self.board[3, 4] = self.board[4,3] = Board.BLACK
-
-        self.black_disk_count = self.white_disk_count = 2
-
-    
+  
     def is_game_over(self) -> bool:
         '''Return True if the game is over (i.e., neither player can make a move), False otherwise'''
 
