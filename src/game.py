@@ -33,11 +33,11 @@ class Game:
         # Load images such as grid lines, starting menu, game over screen
         self.boardIMG = pygame.image.load("images/Board2.png")
 
-        self.endScreenBlackIMG = pygame.image.load("images/Black_Win_Screen.png")
-        self.endScreenWhiteIMG = pygame.image.load("images/White_Win_Screen.png")
-        self.endScreenDrawIMG = pygame.image.load("images/Draw_Win_Screen.png")
+        self.black_winsIMG = pygame.image.load("images/black_wins.png")
+        self.white_winsIMG = pygame.image.load("images/white_wins.png")
+        self.drawIMG = pygame.image.load("images/draw.png")
 
-        self.endPromptIMG  = pygame.image.load("images/Replay_Prompt.png")
+        self.replay_choiceIMG  = pygame.image.load("images/replay.png")
         self.menuIMG = pygame.image.load("images/main_menu.png")
         self.choose_opponentIMG = pygame.image.load("images/choose_AI.png")
 
@@ -217,15 +217,15 @@ class Game:
         '''Display the game over screen in accordance with the game result.'''
 
         if self.game_board.black_disk_count > self.game_board.white_disk_count: # black won
-            Game.fade(self.screen, (self.endScreenBlackIMG, (725, 250)))
+            Game.fade(self.screen, (self.black_winsIMG, (725, 250)))
 
         elif self.game_board.black_disk_count < self.game_board.white_disk_count:   # white won
-            Game.fade(self.screen, (self.endScreenWhiteIMG, (725, 250)))
+            Game.fade(self.screen, (self.white_winsIMG, (725, 250)))
 
         else:   # draw
-            Game.fade(self.screen, (self.endScreenDrawIMG, (725, 250)))
+            Game.fade(self.screen, (self.drawIMG, (725, 250)))
 
-        Game.fade(self.screen, (self.endPromptIMG, (877, 420)))
+        Game.fade(self.screen, (self.replay_choiceIMG, (840, 410)))
         self.is_game_over = True
     
     def random_AI_turn(self, player) -> None:
@@ -434,10 +434,10 @@ class Game:
 
             # AI plays black & white w/ arbitrary slowdown factor
             if self.computer_vs_computer:
-                self.greedy_AI_turn(Board.BLACK)
-                time.sleep(0.2)
-                self.minimax_AI_turn(Board.WHITE)
-                time.sleep(0.2)
+                self.random_AI_turn(Board.BLACK)
+                time.sleep(0.1)
+                self.random_AI_turn(Board.WHITE)
+                time.sleep(0.1)
             
             # only need previews for humans
             if self.is_single_player:
