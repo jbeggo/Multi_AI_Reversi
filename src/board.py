@@ -30,6 +30,21 @@ class Board:
         self.black_disk_count = 2
         self.white_disk_count = 2
     
+    def get_winner(self):
+        '''Returns the winner of the game'''
+
+        # Count the number of pieces for each player
+        black_pieces = np.sum(self.board == Board.BLACK)
+        white_pieces = np.sum(self.board == Board.WHITE)
+
+        # Determine the winner
+        if black_pieces > white_pieces:
+            return 'Black'
+        elif white_pieces > black_pieces:
+            return 'White'
+        else:
+            return 'Draw'
+    
     @staticmethod
     def is_valid_cell(x: int, y: int) -> bool:
         '''Returns true if given coords correspond to valid cell in an 8x8 matrix'''
@@ -44,17 +59,6 @@ class Board:
             for col in range(8):
                 if self.board[row, col] == PLAYER:
                     all_legal_moves.extend(self.legal_moves(row, col))
-        
-        return all_legal_moves
-
-    def all_legal_moves_old(self, PLAYER: int) -> set:
-        '''Return all legal moves for the player'''
-
-        all_legal_moves = set()
-        for row in range(8):
-            for col in range(8):
-                if self.board[row, col] == PLAYER:
-                    all_legal_moves.update(self.legal_moves(row, col))
         
         return all_legal_moves
 
