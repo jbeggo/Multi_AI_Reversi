@@ -344,6 +344,9 @@ class Game:
         # press b to play AI vs AI
         self.computer_vs_computer = (event.key == pygame.K_b)
         
+        # h to play a friend
+        self.player_vs_player = (event.key == pygame.K_h)
+        
         self.game_mode_chosen = True
 
         dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
@@ -351,7 +354,9 @@ class Game:
         dummy_surface.fill(self.background)
         Game.fade(self.screen, (dummy_surface, (0, 0)))
 
-        #self.displayInitialBoardPos()
+        # pvp can jump straight in
+        if self.player_vs_player:
+            self.displayInitialBoardPos()
     
     def choose_opponent(self, event) -> None:
         ''' Handles the choice of AI opponent for Player Vs AI mode '''
@@ -415,7 +420,7 @@ class Game:
             if not self.game_mode_chosen:
                 self.screen.blit(self.menuIMG, (0,0))
                 continue
-            elif not self.opponent_chosen:
+            elif not self.opponent_chosen and self.is_single_player:
                 self.screen.blit(self.choose_opponentIMG, (0,0))
                 continue
 
