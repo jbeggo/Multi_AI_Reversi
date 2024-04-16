@@ -5,6 +5,7 @@ from AI_Players.random_AI import random_move
 from AI_Players.greedy_AI import greedy_move
 from AI_Players.negamax_AI import negamax_move
 from AI_Players.MCTS_AI import mcts_move
+from AI_Players.value_matrix_AI import value_matrix_move
 import pygame, time
 from pygame import gfxdraw
 
@@ -40,16 +41,26 @@ class Game:
         self.replay_choiceIMG  = pygame.image.load("images/replay.png")
         self.menuIMG = pygame.image.load("images/main_menu.png")
         self.choose_opponentIMG = pygame.image.load("images/choose_AI.png")
+        self.choose_p1IMG = pygame.image.load("images/choose_p1.png")
+        self.choose_p2IMG = pygame.image.load("images/choose_p2.png")
 
         # Load font that displays the score
         self.scoreFont = pygame.font.Font("Gotham-Font/GothamLight.ttf", 40)
+        self.playerFont = pygame.font.Font("Gotham-Font/GothamLight.ttf", 20)
 
         self.is_single_player = False
         self.computer_vs_computer = False
         self.player_vs_player = False
         self.game_mode_chosen = False
         self.opponent_chosen = False
-        self.chosen_AI = None
+
+        self.chosen_AI = None # for PvAI
+        
+        self.chosen_p1 = None # for AIvAI
+        self.chosen_p2 = None 
+        self.p1_set = False
+        self.p2_set = False
+        self.players_set = False
 
         self.running = True
         
@@ -106,7 +117,7 @@ class Game:
 
         # Update the display after each move
         self.display_disks()
-        self.displayScore()
+        self.display_score()
     
     def game_over(self, event: pygame.event.Event):
         '''Handle the events following the end of game:
@@ -155,7 +166,7 @@ class Game:
                 elif self.game_board.board[row, col] == Board.WHITE:
                     self.draw_white_disk(x, y, 33)
 
-    def displayScore(self) -> None:
+    def display_score(self) -> None:
         '''Display the score text of each player'''
 
         dummy_surface = pygame.Surface((60, 40))
@@ -168,6 +179,19 @@ class Game:
         white_disc_count = self.scoreFont.render(f"{self.game_board.white_disk_count}", True, text_color)
         self.screen.blit(black_disc_count, (885, 510))
         self.screen.blit(white_disc_count, (1060, 510))
+        
+        pygame.display.flip()
+
+    def display_players(self) -> None:
+        '''Display the current AI players below the score text'''
+
+        text_color = Colours.BLACK
+
+        p1_name = self.playerFont.render(f"{self.chosen_p1}", True, text_color)
+        p2_name = self.playerFont.render(f"{self.chosen_p2}", True, text_color)
+
+        self.screen.blit(p1_name, (885, 560)) 
+        self.screen.blit(p2_name, (1060, 560))  
         
         pygame.display.flip()
 
@@ -252,7 +276,7 @@ class Game:
         # update board visuals
         self.display_disks()
         #self.mark_last_move()
-        self.displayScore()
+        self.display_score()
 
     def greedy_AI_turn(self, player) -> None:
         ''' Code to run when it is (basic greedy) computer player's turn '''
@@ -274,7 +298,7 @@ class Game:
         # update board visuals
         self.display_disks()
         #self.mark_last_move()
-        self.displayScore()
+        self.display_score()
 
     def minimax_AI_turn(self, player) -> None:
         ''' Code to run when it is (minimax strategy) computer player's turn '''
@@ -296,7 +320,7 @@ class Game:
         # update board visuals
         self.display_disks()
         #self.mark_last_move()
-        self.displayScore()
+        self.display_score()
 
     def computer_turn(self, player, chosen_AI) -> None:
         ''' Code to run when computer player's turn '''
@@ -312,8 +336,12 @@ class Game:
             r, c = minimax_simple_move(self.game_board, player)
         elif chosen_AI == "minimax":
             r, c = minimax_move(self.game_board, player)
-        elif chosen_AI == "mcts":
-            r, c = mcts_move(self.game_board, player)
+        elif chosen_AI == "mcts-250":
+            r, c = mcts_move(self.game_board, player, 250)
+        elif chosen_AI == "mcts-500":
+            r, c = mcts_move(self.game_board, player, 500)
+        elif chosen_AI == "value matrix":
+            r, c = value_matrix_move(self.game_board, player)
 
         self.preview_set = False
         
@@ -330,24 +358,25 @@ class Game:
         # update board visuals
         self.display_disks()
         #self.mark_last_move()
-        self.displayScore()
+        self.display_score()
 
     def choose_game_mode(self, event) -> None:
         ''' Handles the mode choice at main menu, Player VS AI, AI VS AI etc... '''
 
-        if event.key not in (pygame.K_a, pygame.K_h, pygame.K_b):
+        if event.key not in (pygame.K_a, pygame.K_h, pygame.K_s):
             return
         
         # press a to play human vs AI
         self.is_single_player = (event.key == pygame.K_a)
 
-        # press b to play AI vs AI
-        self.computer_vs_computer = (event.key == pygame.K_b)
+        # press s to play AI vs AI
+        self.computer_vs_computer = (event.key == pygame.K_s)
         
         # h to play a friend
         self.player_vs_player = (event.key == pygame.K_h)
         
         self.game_mode_chosen = True
+        print("Game mode chosen")
 
         dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
                                         Game.WINDOW_HEIGHT  ))
@@ -361,7 +390,7 @@ class Game:
     def choose_opponent(self, event) -> None:
         ''' Handles the choice of AI opponent for Player Vs AI mode '''
 
-        if event.key not in (range(pygame.K_1, pygame.K_7)): # if not number key pressed
+        if event.key not in (range(pygame.K_1, pygame.K_9)): # if not number key pressed
             return
         
         if event.key == pygame.K_1:
@@ -375,7 +404,11 @@ class Game:
         elif event.key == pygame.K_5:
             self.chosen_AI = "minimax"
         elif event.key == pygame.K_6:
-            self.chosen_AI = "mcts"
+            self.chosen_AI = "mcts-250"
+        elif event.key == pygame.K_7:
+            self.chosen_AI = "mcts-500"
+        elif event.key == pygame.K_8:
+            self.chosen_AI = "value matrix"
         
         self.opponent_chosen = True
 
@@ -386,6 +419,71 @@ class Game:
 
         self.displayInitialBoardPos()
             
+    def choose_p1(self, event) -> None:
+        ''' Handles the choice of AI opponent for AI vs AI player 1 '''
+
+        print("In choose p1")
+        if event.key not in (range(pygame.K_1, pygame.K_9)): # if not number key pressed
+            return
+        
+        if event.key == pygame.K_1:
+            self.chosen_p1 = "random"
+        elif event.key == pygame.K_2:
+            self.chosen_p1 = "greedy"
+        elif event.key == pygame.K_3:
+            self.chosen_p1 = "negamax"
+        elif event.key == pygame.K_4:
+            self.chosen_p1 = "simple minimax"
+        elif event.key == pygame.K_5:
+            self.chosen_p1 = "minimax"
+        elif event.key == pygame.K_6:
+            self.chosen_p1 = "mcts-250"
+        elif event.key == pygame.K_7:
+            self.chosen_p1 = "mcts-500"
+        elif event.key == pygame.K_8:
+            self.chosen_p1 = "value matrix"
+
+        self.p1_set = True
+
+        dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
+                                        Game.WINDOW_HEIGHT  ))
+        dummy_surface.fill(self.background)
+        Game.fade(self.screen, (dummy_surface, (0, 0)))
+
+    
+    def choose_p2(self, event) -> None:
+        ''' Handles the choice of AI opponent for AI vs AI player 2 '''
+
+        if event.key not in (range(pygame.K_1, pygame.K_9)): # if not number key pressed
+            return
+        
+        if event.key == pygame.K_1:
+            self.chosen_p2 = "random"
+        elif event.key == pygame.K_2:
+            self.chosen_p2 = "greedy"
+        elif event.key == pygame.K_3:
+            self.chosen_p2 = "negamax"
+        elif event.key == pygame.K_4:
+            self.chosen_p2 = "simple minimax"
+        elif event.key == pygame.K_5:
+            self.chosen_p2 = "minimax"
+        elif event.key == pygame.K_6:
+            self.chosen_p2 = "mcts-250"
+        elif event.key == pygame.K_7:
+            self.chosen_p2 = "mcts-500"
+        elif event.key == pygame.K_8:
+            self.chosen_p2 = "value matrix"
+
+        self.p2_set = True
+        self.players_set = True
+
+        dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
+                                        Game.WINDOW_HEIGHT  ))
+        dummy_surface.fill(self.background)
+        Game.fade(self.screen, (dummy_surface, (0, 0)))
+
+        self.displayInitialBoardPos() # jump in after p2 chosen
+
     def displayInitialBoardPos(self) -> None:
         '''Blit the board image and score indicators'''
 
@@ -401,7 +499,9 @@ class Game:
         while self.running:
             pygame.display.flip()
             for event in pygame.event.get():
-
+                if event.type not in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONUP, pygame.MOUSEBUTTONDOWN):
+                    print(event)
+                
                 if event.type == pygame.QUIT:
                     self.running = False
 
@@ -414,14 +514,28 @@ class Game:
                 elif not self.game_mode_chosen and event.type == pygame.KEYDOWN:
                     self.choose_game_mode(event)
 
-                elif not self.opponent_chosen and event.type == pygame.KEYDOWN:
+                # Player vs AI
+                elif self.is_single_player and not self.opponent_chosen and event.type == pygame.KEYDOWN:
                     self.choose_opponent(event)
+
+                # AI vs AI
+                elif self.computer_vs_computer and not self.p1_set and event.type == pygame.KEYDOWN:
+                    self.choose_p1(event)
+                
+                elif self.computer_vs_computer and not self.p2_set and event.type == pygame.KEYDOWN:
+                    self.choose_p2(event)
 
             if not self.game_mode_chosen:
                 self.screen.blit(self.menuIMG, (0,0))
                 continue
             elif not self.opponent_chosen and self.is_single_player:
                 self.screen.blit(self.choose_opponentIMG, (0,0))
+                continue
+            elif not self.p1_set and self.computer_vs_computer:
+                self.screen.blit(self.choose_p1IMG, (0,0))
+                continue
+            elif not self.p2_set and self.computer_vs_computer:
+                self.screen.blit(self.choose_p2IMG, (0,0))
                 continue
 
             if self.is_game_over:
@@ -431,25 +545,27 @@ class Game:
             
             #self.mark_last_move()
 
-            self.displayScore()
+            self.display_score()
 
             # Chosen AI plays white against human
             if self.is_single_player and self.turn == Board.WHITE:
                 self.computer_turn(Board.WHITE,self.chosen_AI)
 
             # AI plays black & white w/ arbitrary slowdown factor
-            if self.computer_vs_computer:
-                self.random_AI_turn(Board.BLACK)
+            if self.computer_vs_computer and self.players_set:
+                self.display_players()
+                self.computer_turn(Board.BLACK, self.chosen_p1)
                 time.sleep(0.1)
-                self.random_AI_turn(Board.WHITE)
+                self.computer_turn(Board.WHITE, self.chosen_p2)
                 time.sleep(0.1)
             
             # only need previews for humans
-            if self.is_single_player:
+            if self.is_single_player or self.player_vs_player:
                 self.move_preview()
 
             # game over?
             if self.game_board.is_game_over():
                 self.game_over_screen()
+
 
         pygame.quit()
