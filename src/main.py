@@ -1,4 +1,4 @@
-from game import Game
+from utils.game import Game
 
 gameObj = Game()
 gameObj.game_loop()

@@ -1,4 +1,4 @@
-from board import Board
+from utils.board import Board
 import random
 
 def random_move_older(position: Board) -> tuple[int, int]:

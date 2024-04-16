@@ -1,4 +1,4 @@
-from board import Board
+from utils.board import Board
 from copy import deepcopy
 
 def minimax(position: Board, depth: int, alpha: int, beta: int, isMaximizingPlayer: bool) -> int:

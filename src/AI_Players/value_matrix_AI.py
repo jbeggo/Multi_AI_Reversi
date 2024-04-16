@@ -1,4 +1,4 @@
-from board import Board
+from utils.board import Board
 import numpy as np
 import copy
 

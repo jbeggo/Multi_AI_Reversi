@@ -1,10 +1,10 @@
-from board import Board
-from colors import Colours
-from minimax_AI import minimax_move, minimax_simple_move
-from random_AI import random_move
-from greedy_AI import greedy_move
-from negamax_AI import negamax_move
-from MCTS_AI import mcts_move
+from utils.board import Board
+from utils.colors import Colours
+from AI_Players.minimax_AI import minimax_move, minimax_simple_move
+from AI_Players.random_AI import random_move
+from AI_Players.greedy_AI import greedy_move
+from AI_Players.negamax_AI import negamax_move
+from AI_Players.MCTS_AI import mcts_move
 import pygame, time
 from pygame import gfxdraw
 
