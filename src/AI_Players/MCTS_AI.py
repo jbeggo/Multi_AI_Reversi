@@ -64,7 +64,7 @@ def simulate(node):
         row , col = random.choice(legal_moves)
         board.make_move(row, col, player)
         player = Board.BLACK if player == Board.WHITE else Board.WHITE  # Switch players after making a move
-    return board.evaluate_board(player)  # or Board.WHITE, depending on how you define the score
+    return board.evaluate_board(player)  
 
 def monte_carlo_tree_search(root, num_iterations):
     ''' Main MCTS steps to return best next move '''

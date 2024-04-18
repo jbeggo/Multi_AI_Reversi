@@ -23,8 +23,8 @@ for _ in range(100):  # Play until game end
     
     while not board.is_game_over():
     
-        if player == Board.BLACK:  # Negamax's turn
-            row, col = minimax_simple_move(board, Board.BLACK)
+        if player == Board.BLACK:  # Data Gatherer turn
+            row, col = negamax_move(board, Board.BLACK)
             if row is not None and col is not None:
                 board.make_move(row, col, Board.BLACK)
             else:
@@ -53,7 +53,7 @@ for _ in range(100):  # Play until game end
         draws += 1
 
 # Write the results to a file
-with open('results(Simple Minimax-vs-Random).csv', 'w', newline='') as file:
+with open('results(Negamax-vs-Random).csv', 'w', newline='') as file:
     writer = csv.writer(file)
-    writer.writerow(["Minimax (simple) Wins", "Random Wins", "Draws"])
+    writer.writerow(["negamax Wins", "Random Wins", "Draws"])
     writer.writerow([black_wins, white_wins, draws])

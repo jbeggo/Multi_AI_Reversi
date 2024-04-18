@@ -1,7 +1,7 @@
 from multiprocessing import Pool
 from utils.board import Board
 from AI_Players.MCTS_AI import Node, monte_carlo_tree_search, mcts_move
-from AI_Players.minimax_AI import minimax_move
+from AI_Players.minimax_AI import minimax_move, minimax_simple_move
 from AI_Players.greedy_AI import greedy_move
 from AI_Players.negamax_AI import negamax_move
 from AI_Players.random_AI import random_move
@@ -17,10 +17,10 @@ white_wins = 0
 draws = 0
 
 TOTAL_GAMES = 100
-BATCH_SIZE = 8
+BATCH_SIZE = 6
 
 def play_game(game_number):
-    try: 
+    #try: 
         print(f'Start Game: {game_number+1}')
         
         board = Board()
@@ -29,13 +29,13 @@ def play_game(game_number):
         
         while not board.is_game_over():
         
-            if player == Board.BLACK:  # Negamax's turn
-                row, col = negamax_move(board, Board.BLACK)
+            if player == Board.BLACK:  # Chosen AI's turn
+                row, col = value_matrix_move(board, Board.BLACK)
                 if row is not None and col is not None:
                     board.make_move(row, col, Board.BLACK)
 
-            else:  # Random's turn
-                row, col = random_move(board, Board.WHITE)
+            else:  # Greedy's turn
+                row, col = greedy_move(board, Board.WHITE)
                 if row is not None and col is not None:
                     board.make_move(row, col, Board.WHITE)
             
@@ -45,9 +45,9 @@ def play_game(game_number):
         print(f'Game {game_number+1} finish')
         return board.get_winner()
     
-    except Exception as e:
-        print(f'Error in game {game_number}: {e}')
-        return None
+    #except Exception as e:
+        #print(f'Error in game {game_number}: {e}')
+        #return None
 
 if __name__ == "__main__":
     with Pool() as p:
@@ -59,10 +59,11 @@ if __name__ == "__main__":
             jobs = [p.apply_async(play_game, (j,)) for j in range(i, i + BATCH_SIZE)]
             for job in jobs:
                 try:
-                    result = job.get(timeout=60)
+                    result = job.get(timeout=1000)
                     batch_results.append(result)
                 except TimeoutError:
                     print(f'Timeout in game {job}')
+                    job.terminate()
                     continue
 
             results.extend(batch_results)
@@ -74,7 +75,7 @@ if __name__ == "__main__":
     draws = results.count('Draw')
 
     # Write the results to a file...
-    with open('results(Negamax-vs-Random).csv', 'w', newline='') as file:
+    with open('results(VM-vs-greedy).csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["Negamax Wins", "Random Wins", "Draws"])
+        writer.writerow(["VM", "Greedy wins", "Draws"])
         writer.writerow([black_wins, white_wins, draws])

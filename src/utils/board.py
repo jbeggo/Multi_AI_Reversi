@@ -188,4 +188,28 @@ class Board:
         else:
             corner_value = 100 * (player_corners - opponent_corners) / (player_corners + opponent_corners)
 
+        # stability heuristic - possessing unflippable pieces on edges and corners conveys an advantage
+        stable_pieces = 0
+
+        # Check corner adjacent stable positions
+        adjacent_positions = [
+            # Top-Left Corner (0,0)
+            self.board[0, 1], self.board[1, 0], self.board[1, 1],
+            # Top-Right Corner (0,7)
+            self.board[0, 6], self.board[1, 7], self.board[1, 6],
+            # Bottom-Left Corner (7,0)
+            self.board[6, 0], self.board[7, 1], self.board[6, 1],
+            # Bottom-Right Corner (7,7)
+            self.board[6, 7], self.board[7, 6], self.board[6, 6]
+        ]
+
+        for corner in corners:
+            if corner == player:
+                for position in adjacent_positions:
+                        if position == player:
+                            stable_pieces += 1  # Adjacent piece is stable
+
+        # Add the stable pieces count to the final score
+        stability_value = stable_pieces * 100  # Assign a weight to the stable pieces
+
         return coin_parity + actual_mobility + corner_value
