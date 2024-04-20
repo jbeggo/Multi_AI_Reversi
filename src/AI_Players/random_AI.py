@@ -1,14 +1,14 @@
 from utils.board import Board
 import random
 
-def random_move(position: Board, player_colour: int) -> tuple[int, int]:
+def random_move(board: Board, player_colour: int) -> tuple[int, int]:
     
     # check if game over
-    if position.is_game_over() is True:
+    if board.is_game_over() is True:
         return (None,None)
 
 
-    legal_moves = position.all_legal_moves(player_colour)
+    legal_moves = board.all_legal_moves(player_colour)
     if legal_moves:
         random_move = random.choice(legal_moves)
         return random_move

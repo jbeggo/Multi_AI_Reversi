@@ -30,6 +30,15 @@ class Board:
         self.black_disk_count = 2
         self.white_disk_count = 2
     
+    def reset(self) -> None:
+        self.board.fill(Board.EMPTY)
+        # centre squares in middle of board
+        self.board[3, 3] = self.board[4,4] = Board.WHITE
+        self.board[3, 4] = self.board[4,3] = Board.BLACK
+
+        self.black_disk_count = 2
+        self.white_disk_count = 2
+
     def get_winner(self):
         '''Returns the winner of the game'''
 
@@ -157,36 +166,41 @@ class Board:
         '''Evaluate the board as per coin parity, mobility & corner value heuristics.'''
 
         # coin parity heuristic - difference in number of disks for player
+        total_on_board = self.black_disk_count + self.white_disk_count
+        
         if player == Board.BLACK:
-            coin_parity = 100 * (self.black_disk_count - self.white_disk_count) / (self.black_disk_count + self.white_disk_count)
+            coin_dif = self.black_disk_count - self.white_disk_count
+            coin_parity = 100 * (coin_dif) / (total_on_board)
         else:
-            coin_parity = 100 * (self.white_disk_count - self.black_disk_count) / (self.black_disk_count + self.white_disk_count)
+            coin_dif = self.white_disk_count - self.black_disk_count
+            coin_parity = 100 * (coin_dif) / (total_on_board)
         
         # mobility heuristic - number of empty spaces a player could move into
         black_mobility = len(self.all_legal_moves(Board.BLACK))
         white_mobility = len(self.all_legal_moves(Board.WHITE))
-        if black_mobility + white_mobility == 0:
+        total_mobility = black_mobility + white_mobility
+        if black_mobility == white_mobility:
             actual_mobility = 0
         else:
             # evaluate for given player
             if player == Board.BLACK:
-                actual_mobility = 100 * (black_mobility - white_mobility) / (black_mobility + white_mobility)
+                mob_dif = black_mobility - white_mobility
+                actual_mobility = 100 * (mob_dif) / (total_mobility)
             else:
-                actual_mobility = 100 * (white_mobility - black_mobility) / (black_mobility + white_mobility)
+                mob_dif = white_mobility - black_mobility
+                actual_mobility = 100 * (mob_dif) / (total_mobility)
         
         # corner heuristic - corners cannot be flipped once set
         corners = (self.board[0, 0], self.board[0,7], self.board[7, 0], self.board[7, 7])
-        if player == Board.BLACK:
-            player_corners = sum(+20 for coin in corners if coin == Board.BLACK)
-            opponent_corners = sum(-20 for coin in corners if coin == Board.WHITE)
-        else:
-            player_corners = sum(+20 for coin in corners if coin == Board.WHITE)
-            opponent_corners = sum(-20 for coin in corners if Board.BLACK)
 
-        if player_corners + opponent_corners == 0:
-            corner_value = 0
-        else:
-            corner_value = 100 * (player_corners - opponent_corners) / (player_corners + opponent_corners)
+        player_corners = sum(+20 for coin in corners if coin == player)
+        opponent_corners = sum(-20 for coin in corners if coin == player*-1)
+
+        corner_dif = player_corners - opponent_corners
+        corner_total = player_corners + opponent_corners
+
+        if player_corners + opponent_corners == 0: corner_value = 0
+        else: corner_value = 100 * (corner_dif) / (corner_total)
 
         # stability heuristic - possessing unflippable pieces on edges and corners conveys an advantage
         stable_pieces = 0
@@ -213,3 +227,81 @@ class Board:
         stability_value = stable_pieces * 100  # Assign a weight to the stable pieces
 
         return coin_parity + actual_mobility + corner_value
+    
+    def evaluate_nn(self, player) -> int:
+        '''Evaluate the board as per coin parity, mobility & corner value heuristics.'''
+
+        # coin parity heuristic - difference in number of disks for player
+        total_on_board = self.black_disk_count + self.white_disk_count
+        
+        if player == Board.BLACK:
+            coin_dif = self.black_disk_count - self.white_disk_count
+            coin_parity = 100 * (coin_dif) / (total_on_board)
+        else:
+            coin_dif = self.white_disk_count - self.black_disk_count
+            coin_parity = 100 * (coin_dif) / (total_on_board)
+        
+        # mobility heuristic - number of empty spaces a player could move into
+        black_mobility = len(self.all_legal_moves(Board.BLACK))
+        white_mobility = len(self.all_legal_moves(Board.WHITE))
+        total_mobility = black_mobility + white_mobility
+        if black_mobility == white_mobility:
+            actual_mobility = 0
+        else:
+            # evaluate for given player
+            if player == Board.BLACK:
+                mob_dif = black_mobility - white_mobility
+                actual_mobility = 100 * (mob_dif) / (total_mobility)
+            else:
+                mob_dif = white_mobility - black_mobility
+                actual_mobility = 100 * (mob_dif) / (total_mobility)
+        
+        # corner heuristic - corners cannot be flipped once set
+        corners = (self.board[0, 0], self.board[0,7], self.board[7, 0], self.board[7, 7])
+
+        player_corners = sum(+20 for coin in corners if coin == player)
+        opponent_corners = sum(-20 for coin in corners if coin == player*-1)
+
+        corner_dif = player_corners - opponent_corners
+        corner_total = player_corners + opponent_corners
+
+        if player_corners + opponent_corners == 0: corner_value = 0
+        else: corner_value = 100 * (corner_dif) / (corner_total)
+
+        # stability heuristic - possessing unflippable pieces on edges and corners conveys an advantage
+        stable_pieces = 0
+        stable_pieces_opp = 0
+
+        for x, y in corners:
+            # Determine the owner of the corner
+            corner_owner = self.board[x][y]
+            
+            # Define adjacent positions based on the corner
+            if x == 0 and y == 0:  # Top-Left
+                adjacent = [(0, 1), (1, 0), (1, 1)]
+            elif x == 0 and y == 7:  # Top-Right
+                adjacent = [(0, 6), (1, 6), (1, 7)]
+            elif x == 7 and y == 0:  # Bottom-Left
+                adjacent = [(6, 0), (6, 1), (7, 1)]
+            elif x == 7 and y == 7:  # Bottom-Right
+                adjacent = [(6, 7), (7, 6), (6, 6)]
+
+            # Check stability based on the corner owner
+            for adj_x, adj_y in adjacent:
+                if corner_owner == player:
+                    if self.board[adj_x][adj_y] == player:
+                        stable_pieces += 1
+                elif corner_owner == player * -1:
+                    if self.board[adj_x][adj_y] == player * -1:
+                        stable_pieces_opp += 1
+
+        # Calculate the stability value
+        stable_total = stable_pieces + stable_pieces_opp
+        if stable_total == 0:
+            stability_value = 0
+        else:
+            stability_value = (stable_pieces - stable_pieces_opp) / stable_total * 100
+
+        # return the evaluation score
+        return coin_parity + actual_mobility + corner_value + stability_value
+    

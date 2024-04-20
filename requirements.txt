@@ -1,2 +1,4 @@
 pygame==2.3.0
 numpy==1.25.2
+matplotlib==3.4.3
+pickle

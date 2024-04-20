@@ -8,6 +8,12 @@ from AI_Players.random_AI import random_move
 from AI_Players.value_matrix_AI import value_matrix_move
 import csv
 
+from DQN import QLearningPlayer
+
+
+agent  = QLearningPlayer(1)
+agent.load_model('models/model_1_20240419-235943.keras')
+
 # Initialise a list to store the results
 results = []
 
@@ -16,7 +22,7 @@ black_wins = 0
 white_wins = 0
 draws = 0
 
-TOTAL_GAMES = 100
+TOTAL_GAMES = 1000
 BATCH_SIZE = 6
 
 def play_game(game_number):
@@ -30,12 +36,12 @@ def play_game(game_number):
         while not board.is_game_over():
         
             if player == Board.BLACK:  # Chosen AI's turn
-                row, col = value_matrix_move(board, Board.BLACK)
+                row, col = agent.dqn_move(board, Board.BLACK)
                 if row is not None and col is not None:
                     board.make_move(row, col, Board.BLACK)
 
             else:  # Greedy's turn
-                row, col = greedy_move(board, Board.WHITE)
+                row, col = minimax_move(board, Board.WHITE)
                 if row is not None and col is not None:
                     board.make_move(row, col, Board.WHITE)
             
@@ -43,6 +49,7 @@ def play_game(game_number):
             player = Board.BLACK if player == Board.WHITE else Board.WHITE  
         
         print(f'Game {game_number+1} finish')
+        print(f'Winner: {board.get_winner()}')
         return board.get_winner()
     
     #except Exception as e:
@@ -75,7 +82,7 @@ if __name__ == "__main__":
     draws = results.count('Draw')
 
     # Write the results to a file...
-    with open('results(VM-vs-greedy).csv', 'w', newline='') as file:
+    with open('BATCHresults(DQN-vs-Mini).csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["VM", "Greedy wins", "Draws"])
+        writer.writerow(["DQN", "Minimax wins", "Draws"])
         writer.writerow([black_wins, white_wins, draws])
