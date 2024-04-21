@@ -19,9 +19,6 @@ class QLearningPlayer:
         self.min_epsilon = 0.01
         self.decay = 0.996
 
-        # Adjusted constants for faster temperature decay
-        self.temp_constants = {'a': 1.0, 'b': 0.9997, 'c': 0.002}
-
         # Create unique log directories or tags for each player
         log_dir = f"logs/{player_id}/{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}"
         self.summary_writer = tf.summary.create_file_writer(log_dir)

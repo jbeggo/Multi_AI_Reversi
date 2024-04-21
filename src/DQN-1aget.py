@@ -18,7 +18,7 @@ class QLearningPlayer:
         self.num_games_played = 0
 
         self.replay_memory = deque(maxlen=1000)  # Replay memory
-        self.batch_size = 64  # Batch size for replay
+        self.batch_size = 16  # Batch size for replay
 
         self.epsilon = 1.0
         self.min_epsilon = 0.01
@@ -38,7 +38,7 @@ class QLearningPlayer:
         
         self.tensorboard = TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph=True)
     
-    def update_epsilon(self):
+    def decay_epsilon(self):
         # Multiply epsilon by decay factor
         self.epsilon *= self.decay
         self.epsilon = max(self.epsilon, self.min_epsilon)  # Ensure epsilon does not go below min_epsilon
@@ -121,46 +121,37 @@ class QLearningPlayer:
         return legal_moves[chosen_index]
     
     def learn_from_replay(self, step):
+        # Only learn if there are enough experiences
+        if len(self.replay_memory) < self.batch_size:
+            return  
+        
         # Sample a mini-batch from replay memory
         batch = random.sample(self.replay_memory, self.batch_size)
-        #print(batch)
-        states = []
-        targets = []
-        for state, action, reward, next_state, done in batch:
-            target = reward
-            if not done:
-                next_q_values = self.model.predict(next_state.reshape(1, -1), verbose=0).flatten()
-                target += self.discount_factor * np.max(next_q_values)
+        print(batch)
+        states, actions, rewards, next_states, dones = zip(*batch)
+        
+        # Compute target Q-values
+        current_qs = self.model.predict(np.array(states), verbose=0)
+        next_qs = self.model.predict(np.array(next_states), verbose=0)
+        targets = np.array(current_qs)  # Copy current predictions
+        for i in range(self.batch_size):
+            if dones[i]:
+                targets[i][actions[i]] = rewards[i]  # No future rewards if done
+            else:
+                targets[i][actions[i]] = rewards[i] + self.discount_factor * np.max(next_qs[i])
 
-            current_q_values = self.model.predict(state.reshape(1, -1), verbose=0).flatten()
-            action_index = self.convert_to_index(action) if isinstance(action, tuple) else action
-            current_q_values[action_index] = target
-            #print(current_q_values)
-            states.append(state.flatten())
-            targets.append(current_q_values)
-
-        # Convert lists to numpy arrays
-        states = np.array(states)
-        targets = np.array(targets)
-
-        # Train the model on the mini-batch
-        history = self.model.fit(states, targets, epochs=1, verbose=0,batch_size=self.batch_size, callbacks=[self.tensorboard])
+        # Perform a single update on the entire batch
+        history = self.model.fit(np.array(states), targets, epochs=1, batch_size=self.batch_size, callbacks=[self.tensorboard])
 
         # Log training loss
         with self.summary_writer.as_default():
             tf.summary.scalar('training_loss', np.average(history.history['loss']), step)
             self.summary_writer.flush()
     
-    def learn(self, state, action, reward, next_state, done, step):
+    def remember_experience(self, state, action, reward, next_state, done):
         # Store the experience in replay memory
         self.replay_memory.append((state, action, reward, next_state, done))
 
-        # Learn from the replay memory
-        if len(self.replay_memory) >= self.batch_size:
-            print("Learning from replay")
-            self.learn_from_replay(step)
-
-    
     def update_game_count(self):
         self.num_games_played += 1
 
@@ -192,38 +183,43 @@ class Q_env:
                 if action:
                     # execute action a
                     self.board.make_move(*action, self.turn)
-                    self.board.print_board()
+                    #self.board.print_board()
                     next_state = self.board.board.flatten()
-                    self.player.learn(state, action, 0, next_state, False, self.global_step)
+
+                    # hacky, default reward 0 for non terminal move
+                    reward = 0
+                    done = self.board.is_game_over()
+                    if done:
+                        winner = self.board.get_winner()
+                        reward = 1 if (winner == 'Black' and self.turn == Board.WHITE) \
+                                    or (winner == 'White' and self.turn == Board.BLACK) else -1 if winner else 0
+                    
+                    self.player.remember_experience(state, self.player.convert_to_index(action), reward, next_state, done)
+                    self.player.log_q_values(state, self.global_step)
             
             self.switch_turn()
 
-        # Determine the winner and assign rewards
-        winner = self.board.get_winner()
-        # can be confusing - based on last move if turn is white, then black won
-        reward = 1 if (winner == 'Black' and self.turn == Board.WHITE) \
-            or (winner == 'White' and self.turn == Board.BLACK) else -1 if winner else 0
-
-        # Learn from the final state of the game
-        self.player.learn(state, action, reward, None, True, self.global_step)  # No next state at the end of the game
-        self.player.log_q_values(state, self.global_step)
-        self.player.update_epsilon()
+        self.player.decay_epsilon()
 
     def train(self, episodes):
         for game in range(episodes):
             self.reset_game()
 
             self.play_game()
-        
+
+            
+            self.player.learn_from_replay(self.global_step)
+
             self.global_step += 1
             
             self.player.update_game_count()
 
             if (game+1) % 100 == 0:
                 self.player.save_model()
+
             print(f"Game {game+1} completed")
 
 
 # Example usage
 environment = Q_env()
-environment.train(1000)  # Train over x games
+environment.train(10000)  # Train over x games

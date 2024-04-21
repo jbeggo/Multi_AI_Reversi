@@ -18,20 +18,26 @@ class Board:
 
     def __init__(self) -> None:
         '''Initialise board as a 8x8 2D numpy array (matrix)'''
-        self.board = np.zeros((8, 8), dtype=np.int8)
+        self.board = np.array([0]*8, dtype = np.int8)   # initiliasing 1D array with the first row of 8 zeroes
+        self.board = self.board[np.newaxis, : ]         # expanding 1D array to 2D array
+        for _ in range(3):                              # increasing rows till 8
+            self.board = np.concatenate((self.board, self.board), axis = 0)
 
         # centre squares in middle of board
         self.board[3, 3] = self.board[4,4] = Board.WHITE
         self.board[3, 4] = self.board[4,3] = Board.BLACK
 
-        self.update_counts()
+        self.black_disk_count = 2
+        self.white_disk_count = 2
     
-    def update_counts(self):
-        self.black_disk_count = np.sum(self.board == Board.BLACK)
-        self.white_disk_count = np.sum(self.board == Board.WHITE)
-
     def reset(self) -> None:
-        self.__init__()
+        self.board.fill(Board.EMPTY)
+        # centre squares in middle of board
+        self.board[3, 3] = self.board[4,4] = Board.WHITE
+        self.board[3, 4] = self.board[4,3] = Board.BLACK
+
+        self.black_disk_count = 2
+        self.white_disk_count = 2
 
     def get_winner(self):
         '''Returns the winner of the game'''
@@ -52,41 +58,48 @@ class Board:
     def is_valid_cell(x: int, y: int) -> bool:
         '''Returns true if given coords correspond to valid cell in an 8x8 matrix'''
 
-        return 0 <= x < 8 and 0 <= y < 8
+        return (x >= 0 and y >= 0) and (x < 8 and y < 8)
 
-    def all_legal_moves(self, player: int) -> list:
+    def all_legal_moves(self, PLAYER: int) -> list:
         '''Return all legal moves for the player'''
 
-        legal_moves = set()
-        for r in range(8):
-            for c in range(8):
-                if self.board[r, c] == player:
-                    moves = self.legal_moves(r, c, player)
-                    legal_moves.update(moves)
-        return list(legal_moves)
+        all_legal_moves = []
+        for row in range(8):
+            for col in range(8):
+                if self.board[row, col] == PLAYER:
+                    all_legal_moves.extend(self.legal_moves(row, col))
+        
+        return all_legal_moves
 
-    def legal_moves(self, r, c, player):
-        '''Return legal moves from a particular cell and player'''
-        opponent = -player
-        valid_moves = set()
-        
-        for dx, dy in Board.DIRECTIONS:
-            x, y = r + dx, c + dy
+    def legal_moves(self, r: int, c: int) -> list:
+        '''Return all legal moves for the cell at the given position'''
+        print("Check cell: ", r, c)
+        PLAYER = self.board[r, c]
+        OPPONENT = PLAYER * -1
+
+        legal_moves = []
+        for dir in Board.DIRECTIONS:
+            rowDir, colDir = dir
+            row = r + rowDir
+            col = c + colDir
+
+            print(f"Start checking from ({r},{c}) in direction ({rowDir},{colDir})")
+
+
+            if Board.is_valid_cell(row, col) is False or self.board[row, col] != OPPONENT:
+                continue
             
-            if self.is_valid_cell(x, y) and self.board[x, y] == opponent:
-                # Move in the direction while it is opponent's piece
-                x += dx
-                y += dy
-                while self.is_valid_cell(x, y) and self.board[x, y] == opponent:
-                    x += dx
-                    y += dy
-                    if not self.is_valid_cell(x, y) or self.board[x, y] != opponent:
-                        break
-                # Place piece if the chain ends in an empty square
-                if self.is_valid_cell(x, y) and self.board[x, y] == Board.EMPTY:
-                    valid_moves.add((x, y))
-        
-        return valid_moves
+            row += rowDir
+            col += colDir
+            while (Board.is_valid_cell(row, col) is True and self.board[row, col] == OPPONENT):
+                print(f"Checking cell ({row},{col}) - Opponent found")
+                row += rowDir
+                col += colDir
+            if (Board.is_valid_cell(row, col) is True and self.board[row, col] == Board.EMPTY):   # possible move
+                print(f"Legal move found at ({row},{col})")
+                legal_moves.append((row, col))
+
+        return legal_moves
 
     def print_board(self) -> None:
         '''Print the current state of the board in a readable format'''
@@ -106,42 +119,53 @@ class Board:
         ''' Return the current score in the form of "White: x, Black: x" '''
         print(f"White: {self.white_disk_count}, Black: {self.black_disk_count}")
 
-    def flip_disks(self, start_row, start_col, player, dx, dy):
-        '''Flip opponent's disks following the rules of reversi'''
-        row, col = start_row + dx, start_col + dy
-        while self.is_valid_cell(row, col) and self.board[row, col] == -player:
-            self.board[row, col] = player
-            row += dx
-            col += dy
+    def flip_disks(self, PLAYER: int, initCoords: tuple[int, int], endCoords: tuple[int, int], direction: tuple[int, int]):
+        '''Flip the disks between the given two cells to the given PLAYER color.'''
 
-    def make_move(self, row, col, player):
-        '''Make a move for the player at specified row and column, updating the board'''
-        if (row, col) not in self.all_legal_moves(player):
-            raise ValueError("Move is not allowed")
+        OPPONENT = PLAYER * -1
+        rowDir, colDir = direction
 
-        self.board[row, col] = player
-        for dx, dy in Board.DIRECTIONS:
-            if self.capture_pieces(row, col, player, dx, dy):
-                self.flip_disks(row, col, player, dx, dy)
+        row, col = initCoords
+        row += rowDir
+        col += colDir 
 
-        self.update_counts()
+        r, c = endCoords
+
+        while (self.board[row, col] == OPPONENT) and (row != r or col != c):
+            self.board[row, col] = PLAYER
+            row += rowDir
+            col += colDir
+
+    def make_move(self, row: int, col: int, PLAYER: int) -> None:
+        ''' Set the disks on the board as per the move made on the given cell '''
+        
+        self.board[row, col] = PLAYER
+        OPPONENT = PLAYER * - 1
+        
+        for dir in Board.DIRECTIONS:
+            rowDir, colDir = dir
+            r = row + rowDir
+            c = col + colDir
+
+            if Board.is_valid_cell(r, c) is False or self.board[r, c] != OPPONENT:
+                continue
+            
+            r += rowDir
+            c += colDir
+            while (Board.is_valid_cell(r, c) is True and self.board[r, c] == OPPONENT):
+                r += rowDir
+                c += colDir
+            if (Board.is_valid_cell(r, c) is True and self.board[r, c] == PLAYER):
+                self.flip_disks(PLAYER, (row, col), (r, c), dir) 
+                
+        # update disc counters
+        self.black_disk_count = self.board[self.board > 0].sum()
+        self.white_disk_count = -self.board[self.board < 0].sum()
     
-    def capture_pieces(self, start_row, start_col, player, dx, dy):
-        '''Check if placing a piece captures opponent's pieces'''
-        row, col = start_row + dx, start_col + dy
-        pieces_to_flip = []
-        while self.is_valid_cell(row, col) and self.board[row, col] == -player:
-            pieces_to_flip.append((row, col))
-            row += dx
-            col += dy
+    def is_game_over(self) -> bool:
+        '''Return True if the game is over (i.e., neither player can make a move), False otherwise'''
 
-        if self.is_valid_cell(row, col) and self.board[row, col] == player:
-            return pieces_to_flip
-        return []
-
-    def is_game_over(self):
-        '''Check if the game is over by looking for available moves for both players'''
-        return not self.all_legal_moves(Board.BLACK) and not self.all_legal_moves(Board.WHITE)
+        return len(self.all_legal_moves(Board.BLACK)) == 0 and len(self.all_legal_moves(Board.WHITE)) == 0
 
     def evaluate_board(self, player) -> int:
         '''Evaluate the board as per coin parity, mobility & corner value heuristics.'''

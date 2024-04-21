@@ -167,7 +167,7 @@ class Q_env:
     def __init__(self):
         self.board = Board()
         self.player1 = QLearningPlayer(1)
-        self.player2 = QLearningPlayer(2)  # Assuming player2 is another learning agent or a static policy opponent
+        self.player2 = QLearningPlayer(2)  # Assuming player2 is another learning agent
         self.current_player = self.player1
         self.turn = Board.BLACK  # Starting player
         self.global_step = 0
@@ -180,6 +180,24 @@ class Q_env:
     def switch_player(self):
         self.current_player = self.player2 if self.current_player == self.player1 else self.player1
         self.turn = Board.WHITE if self.turn == Board.BLACK else Board.BLACK
+
+    def play(self):
+        while not self.board.is_game_over():
+            # observe current state s
+            state = self.board.board.flatten()
+            # predict from state s
+            current_q_values = self.current_player.model.predict(state.reshape(1, -1)).flatten()
+
+            # select action a, epsilon-greedy
+            legal_moves = self.board.all_legal_moves(self.turn)
+            if legal_moves:
+                current_q_values = self.current_player.model.predict(state.reshape(1, -1)).flatten()
+                action = self.current_player.select_action(current_q_values, legal_moves, self.global_step)
+                if action:
+                    # execute action a
+                    self.board.make_move(*action, self.turn)
+                    next_state = self.board.board.flatten()
+                    self.current_player.learn(state, action, 0, next_state, False, self.global_step)
 
     def play_game(self):
         while not self.board.is_game_over():

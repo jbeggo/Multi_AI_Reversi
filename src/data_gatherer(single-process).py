@@ -10,7 +10,7 @@ import csv
 
 
 agent  = QLearningPlayer(1)
-agent.load_model('models/model_1_20240420-142957.keras')
+agent.load_model('models/model(single)_20240421-173846.keras')
 
 # Initialize a list to store the results
 results = []
@@ -56,7 +56,7 @@ for _ in range(100):  # Play until game end
         draws += 1
 
 # Write the results to a file
-with open('results/results(DQN-vs-Random).csv', 'w', newline='') as file:
+with open('results/results(DQN(single)-vs-Random).csv', 'w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(["DQN Wins", "Random Wins", "Draws"])
     writer.writerow([black_wins, white_wins, draws])
