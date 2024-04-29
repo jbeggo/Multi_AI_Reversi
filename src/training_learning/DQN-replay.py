@@ -4,7 +4,6 @@ import random
 from collections import deque
 from utils.board import Board
 import tensorflow as tf
-from tensorboard.plugins.hparams import api as hp
 import keras.models as models
 from keras.layers import Input, Dense
 from keras.optimizers import Adam
@@ -12,20 +11,21 @@ from keras.callbacks import TensorBoard
 import datetime
 
 class QLearningPlayer:
-    def __init__(self):
+    def __init__(self, player_id):
+        self.player_id = player_id
         self.learning_rate = 0.01
         self.discount_factor = 1.0
         self.num_games_played = 0
 
         self.replay_memory = deque(maxlen=1000)  # Replay memory
-        self.batch_size = 16  # Batch size for replay
+        self.batch_size = 64  # Batch size for replay
 
         self.epsilon = 1.0
         self.min_epsilon = 0.01
         self.decay = 0.996
 
         # Create unique log directories or tags for each player
-        log_dir = f"logs/{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        log_dir = f"logs/{player_id}/{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}"
         self.summary_writer = tf.summary.create_file_writer(log_dir)
         
         # Define the model
@@ -38,13 +38,13 @@ class QLearningPlayer:
         
         self.tensorboard = TensorBoard(log_dir=log_dir, histogram_freq=1, write_graph=True)
     
-    def decay_epsilon(self):
+    def update_epsilon(self):
         # Multiply epsilon by decay factor
         self.epsilon *= self.decay
         self.epsilon = max(self.epsilon, self.min_epsilon)  # Ensure epsilon does not go below min_epsilon
 
     def save_model(self):
-        file_path = f'models/model(single)_{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}.keras'
+        file_path = f'models/model_{self.player_id}_{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}.keras'
         self.model.save(file_path)
         print(f"Model saved to {file_path}")
 
@@ -59,7 +59,7 @@ class QLearningPlayer:
         return row * 8 + col  # Adjust this based on board dimensions if necessary
     
     def log_q_values(self, state, step):
-        q_values = self.model.predict(state.reshape(1, -1), verbose=0).flatten()
+        q_values = self.model.predict(state.reshape(1, -1)).flatten()
         avg_q_value = np.mean(q_values)
         with self.summary_writer.as_default():
             tf.summary.scalar('Average_Q_value', avg_q_value, step=step)
@@ -77,7 +77,7 @@ class QLearningPlayer:
         state = np.array(state).reshape(1, -1)
         
         # Predict the Q-values for all possible actions
-        q_values = self.model.predict(state,verbose=0).flatten()
+        q_values = self.model.predict(state,verbose=False).flatten()
         
         legal_indices = [self.convert_to_index(move) for move in legal_moves]
         # Filter out the Q-values for illegal moves by setting them to a very high negative value
@@ -121,105 +121,122 @@ class QLearningPlayer:
         return legal_moves[chosen_index]
     
     def learn_from_replay(self, step):
-        # Only learn if there are enough experiences
-        if len(self.replay_memory) < self.batch_size:
-            return  
-        
         # Sample a mini-batch from replay memory
         batch = random.sample(self.replay_memory, self.batch_size)
         print(batch)
-        states, actions, rewards, next_states, dones = zip(*batch)
-        
-        # Compute target Q-values
-        current_qs = self.model.predict(np.array(states), verbose=0)
-        next_qs = self.model.predict(np.array(next_states), verbose=0)
-        targets = np.array(current_qs)  # Copy current predictions
-        for i in range(self.batch_size):
-            if dones[i]:
-                targets[i][actions[i]] = rewards[i]  # No future rewards if done
-            else:
-                targets[i][actions[i]] = rewards[i] + self.discount_factor * np.max(next_qs[i])
+        states = []
+        targets = []
+        for state, action, reward, next_state, done in batch:
+            target = reward
+            if not done:
+                next_q_values = self.model.predict(next_state.reshape(1, -1)).flatten()
+                target += self.discount_factor * np.max(next_q_values)
 
-        # Perform a single update on the entire batch
-        history = self.model.fit(np.array(states), targets, epochs=1, batch_size=self.batch_size, callbacks=[self.tensorboard])
+            current_q_values = self.model.predict(state.reshape(1, -1)).flatten()
+            action_index = self.convert_to_index(action) if isinstance(action, tuple) else action
+            current_q_values[action_index] = target
+            print(current_q_values)
+            states.append(state.flatten())
+            targets.append(current_q_values)
+
+        # Convert lists to numpy arrays
+        states = np.array(states)
+        targets = np.array(targets)
+
+        # Train the model on the mini-batch
+        history = self.model.fit(states, targets, epochs=1, verbose=0, batch_size=self.batch_size, callbacks=[self.tensorboard])
 
         # Log training loss
         with self.summary_writer.as_default():
             tf.summary.scalar('training_loss', np.average(history.history['loss']), step)
             self.summary_writer.flush()
     
-    def remember_experience(self, state, action, reward, next_state, done):
+    def learn(self, state, action, reward, next_state, done, step):
         # Store the experience in replay memory
         self.replay_memory.append((state, action, reward, next_state, done))
 
+        # Learn from the replay memory
+        if len(self.replay_memory) >= self.batch_size:
+            self.learn_from_replay(step)
+
+    
     def update_game_count(self):
         self.num_games_played += 1
 
 class Q_env:
     def __init__(self):
         self.board = Board()
-        self.player = QLearningPlayer()
+        self.player1 = QLearningPlayer(1)
+        self.player2 = QLearningPlayer(2)  # Assuming player2 is another learning agent
+        self.current_player = self.player1
         self.turn = Board.BLACK  # Starting player
         self.global_step = 0
 
     def reset_game(self):
         self.board.reset()
+        self.current_player = self.player1
         self.turn = Board.BLACK
 
-    def switch_turn(self):
+    def switch_player(self):
+        self.current_player = self.player2 if self.current_player == self.player1 else self.player1
         self.turn = Board.WHITE if self.turn == Board.BLACK else Board.BLACK
 
     def play_game(self):
         while not self.board.is_game_over():
             # observe current state s
             state = self.board.board.flatten()
+            # predict from state s
+            current_q_values = self.current_player.model.predict(state.reshape(1, -1)).flatten()
 
             # select action a, epsilon-greedy
             legal_moves = self.board.all_legal_moves(self.turn)
             if legal_moves:
-                # predict from state s
-                current_q_values = self.player.model.predict(state.reshape(1, -1), verbose=0).flatten()
-                action = self.player.select_action(current_q_values, legal_moves, self.global_step)
+                current_q_values = self.current_player.model.predict(state.reshape(1, -1)).flatten()
+                action = self.current_player.select_action(current_q_values, legal_moves, self.global_step)
                 if action:
                     # execute action a
                     self.board.make_move(*action, self.turn)
-                    #self.board.print_board()
                     next_state = self.board.board.flatten()
-
-                    # hacky, default reward 0 for non terminal move
-                    reward = 0
-                    done = self.board.is_game_over()
-                    if done:
-                        winner = self.board.get_winner()
-                        reward = 1 if (winner == 'Black' and self.turn == Board.WHITE) \
-                                    or (winner == 'White' and self.turn == Board.BLACK) else -1 if winner else 0
-                    
-                    self.player.remember_experience(state, self.player.convert_to_index(action), reward, next_state, done)
-                    self.player.log_q_values(state, self.global_step)
+                    self.current_player.learn(state, action, 0, next_state, False, self.global_step)
             
-            self.switch_turn()
+            self.switch_player()
 
-        self.player.decay_epsilon()
+
+        # Determine the winner and assign rewards
+        winner = self.board.get_winner()
+        #print(winner)
+        reward_player1 = 1 if winner == 'Black' else -1 if winner == 'White' else 0
+        reward_player2 = -reward_player1
+
+        # Learn from the final state of the game
+        self.player1.learn(state, action, reward_player1, None, True, self.global_step)  # No next state at the end of the game
+        self.player1.log_q_values(state, self.global_step)  
+        self.player2.learn(state, action, reward_player2, None, True, self.global_step)  # Assume symmetric update for player2
+        self.player2.log_q_values(state, self.global_step)
+
+        self.player1.update_epsilon()
+        self.player2.update_epsilon()
 
     def train(self, episodes):
         for game in range(episodes):
             self.reset_game()
 
+            #state = self.board.board.flatten()  # Capture the initial state right after reset
+            #self.current_player.log_q_values(state, self.global_step)  # Log Q-values for the initial state
+
             self.play_game()
-
             
-            self.player.learn_from_replay(self.global_step)
-
+            # After each game, increment the global step
             self.global_step += 1
             
-            self.player.update_game_count()
+            self.player1.update_game_count()
+            self.player2.update_game_count()
 
             if (game+1) % 100 == 0:
-                self.player.save_model()
-
-            print(f"Game {game+1} completed")
+                self.player1.save_model()
+                self.player2.save_model()
 
 
 # Example usage
 environment = Q_env()
-environment.train(10000)  # Train over x games
+environment.train(1000)  # Train over x games

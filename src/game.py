@@ -1,6 +1,6 @@
 from utils.board import Board
 from utils.colors import Colours
-from AI_Players.minimax_AI import minimax_move, minimax_simple_move
+from AI_Players.minimax_AI import minimax_move, minimax_noprune_move
 from AI_Players.random_AI import random_move
 from AI_Players.greedy_AI import greedy_move
 from AI_Players.negamax_AI import negamax_move
@@ -15,15 +15,13 @@ class Game:
     WINDOW_WIDTH = 1200
     WINDOW_HEIGHT = 800
 
-    LIGHT = 1
-    DARK = 0
-
     def __init__(self) -> None:
         '''Initialise the Game Object'''
 
         self.game_board = Board()
 
         self.background = (204,204,204)
+        self.text_colour = (0,0,0)
 
         self.high_contrast = False
 
@@ -48,6 +46,7 @@ class Game:
 
         # Load font that displays the score
         self.score_font = pygame.font.Font("Gotham-Font/GothamLight.ttf", 40)
+        self.message_font = pygame.font.Font("Gotham-Font/GothamLight.ttf", 60)
         self.player_font = pygame.font.Font("Gotham-Font/GothamLight.ttf", 20)
 
         self.preview_positions = []
@@ -177,7 +176,7 @@ class Game:
         self.chosen_AI = None
         self.game_board = Board() # create a new fresh board
 
-        self.displayInitialBoardPos()
+        self.display_starting_pieces()
         self.last_move = (0,0)
 
     def display_disks(self) -> None:
@@ -205,7 +204,7 @@ class Game:
         self.screen.blit(dummy_surface, (885, 510))
         self.screen.blit(dummy_surface, (1060, 510))
 
-        text_color = Colours.BLACK
+        text_color = self.text_colour
         black_disc_count = self.score_font.render(f"{self.game_board.black_disk_count}", True, text_color)
         white_disc_count = self.score_font.render(f"{self.game_board.white_disk_count}", True, text_color)
         self.screen.blit(black_disc_count, (885, 510))
@@ -213,10 +212,63 @@ class Game:
         
         pygame.display.flip()
 
+    def display_thinking(self) -> None:
+        '''Blit a message while the AI player concocts a move to make'''
+
+        text_surface = pygame.Surface((60, 40))
+        text_surface.fill(self.background)
+        self.screen.blit(text_surface, (860, 210))
+
+        text_color = self.text_colour
+        thinking_text = self.message_font.render(f"Thinking...", True, text_color)
+        self.screen.blit(thinking_text, (820, 210))
+        
+        pygame.display.flip()
+
+    def clear_thinking(self):
+        '''Clear the AI decision time message'''
+        
+        pygame.draw.rect(self.screen, self.background, pygame.Rect(820, 200, 300, 100))
+
+        pygame.display.flip()
+
+    def display_turn(self) -> None:
+        '''Blit a message while the AI player concocts a move to make'''
+
+        #text_surface = pygame.Surface((60, 40))
+        #text_surface.fill(self.background)
+        #self.screen.blit(text_surface, (30, 720))
+
+        pygame.draw.rect(self.screen, self.background, pygame.Rect(20, 710, 300, 60))
+        text_color = self.text_colour
+        turn = "Black's" if self.turn == 1 else "White's"
+        turn_text = self.score_font.render(f"{turn} turn!", True, text_color)
+        self.screen.blit(turn_text, (30, 720))
+        
+        pygame.display.flip()
+
+    def clear_turn_text(self):
+        '''Clear the AI decision time message'''
+        
+        pygame.draw.rect(self.screen, (0,0,0), pygame.Rect(20, 710, 300, 60))
+
+        pygame.display.flip()
+
+    def display_opponent(self) -> None:
+        '''Display the name of the current opponent above the board'''
+
+        pygame.draw.rect(self.screen, self.background, pygame.Rect(40, 30, 500, 60))
+        text_color = self.text_colour
+        opp_name = self.score_font.render(f"Opponent: {self.chosen_AI}", True, text_color)
+
+        self.screen.blit(opp_name, (90, 40))  
+        
+        pygame.display.flip()
+
     def display_players(self) -> None:
         '''Display the current AI players below the score text'''
 
-        text_color = Colours.BLACK
+        text_color = self.text_colour
 
         p1_name = self.player_font.render(f"{self.chosen_p1}", True, text_color)
         p2_name = self.player_font.render(f"{self.chosen_p2}", True, text_color)
@@ -227,7 +279,7 @@ class Game:
         pygame.display.flip()
 
     def move_preview(self):
-        ''' Display all the possible legal moves for the player with the current turn '''
+        '''Display previews for the current player as shadowed circles'''
 
         if self.preview_set:    # possible moves are already displayed
             return
@@ -260,17 +312,6 @@ class Game:
             
         self.preview_set = True
 
-    def clear_preview_old(self):
-        ''' Draws a rectangle over old move previewed cells in background colour '''
-        
-        possible_moves = self.game_board.all_legal_moves(self.turn)
-        
-        for pos in possible_moves:
-            row, col = pos
-            x = 100 + 75 * col
-            y = 100 + 75 * row
-            pygame.draw.rect(self.screen, self.background, pygame.Rect(x+4, y+4, 67, 67))
-
     def clear_preview(self):
         ''' Draws a rectangle over old move previewed cells in background colour '''
         
@@ -296,55 +337,6 @@ class Game:
 
         Game.fade(self.screen, (self.replay_choiceIMG, (840, 410)))
         self.is_game_over = True
-    
-    def random_AI_turn(self, player) -> None:
-        ''' Code to run when it is (random strategy) computer player's turn '''
-        
-        if player == Board.WHITE:
-            r, c = random_move(self.game_board, -1)
-        elif player == Board.BLACK:
-            r, c = random_move(self.game_board, 1)
-        else: raise Exception("random_AI_turn needs colour argument 1/-1")
-
-        self.preview_set = False
-        
-        if (r,c) == (None, None):
-            return
-        
-        self.last_move = (r, c)
-        self.game_board.make_move(r, c, self.turn)
-        self.turn *= -1
-
-        self.clear_preview
-
-
-        # update board visuals
-        self.display_disks()
-        #self.mark_last_move()
-        self.display_score()
-
-    def greedy_AI_turn(self, player) -> None:
-        ''' Code to run when it is (basic greedy) computer player's turn '''
-        
-        r, c = greedy_move(self.game_board, player)
-        
-
-        self.preview_set = False
-        
-        if (r,c) == (20, 20):
-            return
-        
-        self.last_move = (r, c)
-        self.game_board.make_move(r, c, self.turn)
-        self.turn *= -1
-
-        self.clear_preview
-
-        # update board visuals
-        self.display_disks()
-        #self.mark_last_move()
-        self.display_score()
-
 
     def computer_turn(self, player, chosen_AI) -> None:
         ''' Code to run when computer player's turn '''
@@ -357,7 +349,7 @@ class Game:
         elif chosen_AI == "negamax":
             r, c = negamax_move(self.game_board, player)
         elif chosen_AI == "simple minimax":
-            r, c = minimax_simple_move(self.game_board, player)
+            r, c = minimax_noprune_move(self.game_board, player)
         elif chosen_AI == "minimax":
             r, c = minimax_move(self.game_board, player)
         elif chosen_AI == "mcts-250":
@@ -416,7 +408,7 @@ class Game:
 
             # pvp can jump straight in
             if self.player_vs_player:
-                self.displayInitialBoardPos()
+                self.display_starting_pieces()
     
     def choose_opponent(self, event) -> None:
         ''' Handles the choice of AI opponent for Player Vs AI mode '''
@@ -448,7 +440,7 @@ class Game:
         dummy_surface.fill(self.background)
         Game.fade(self.screen, (dummy_surface, (0, 0)))
 
-        self.displayInitialBoardPos()
+        self.display_starting_pieces()
             
     def choose_p1(self, event) -> None:
         ''' Handles the choice of AI opponent for AI vs AI player 1 '''
@@ -512,9 +504,9 @@ class Game:
         dummy_surface.fill(self.background)
         Game.fade(self.screen, (dummy_surface, (0, 0)))
 
-        self.displayInitialBoardPos() # jump in after p2 chosen
+        self.display_starting_pieces() # jump in after p2 chosen
 
-    def displayInitialBoardPos(self) -> None:
+    def display_starting_pieces(self) -> None:
         '''Blit the board image and score indicators'''
 
         self.screen.blit(self.boardIMG, (0,0))
@@ -529,8 +521,9 @@ class Game:
         while self.running:
             pygame.display.flip()
             for event in pygame.event.get():
-                if event.type not in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONUP, pygame.MOUSEBUTTONDOWN):
-                    print(event)
+                # for debugging events that are not mouse clicks
+                #if event.type not in (pygame.MOUSEMOTION, pygame.MOUSEBUTTONUP, pygame.MOUSEBUTTONDOWN):
+                    #print(event)
                 
                 if event.type == pygame.QUIT:
                     self.running = False
@@ -576,10 +569,18 @@ class Game:
             #self.mark_last_move()
 
             self.display_score()
+            self.display_turn()
+
+            if self.is_single_player:
+                self.display_opponent()
 
             # Chosen AI plays white against human
             if self.is_single_player and self.turn == Board.WHITE:
+                self.display_thinking()
+                time.sleep(2)
                 self.computer_turn(Board.WHITE,self.chosen_AI)
+                self.clear_thinking()
+                #self.clear_turn_text()
 
             # AI plays black & white w/ arbitrary slowdown factor
             if self.computer_vs_computer and self.players_set:
@@ -599,3 +600,6 @@ class Game:
 
 
         pygame.quit()
+
+game = Game()
+game.game_loop()

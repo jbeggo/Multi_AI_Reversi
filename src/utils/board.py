@@ -19,7 +19,8 @@ class Board:
     def __init__(self) -> None:
         '''Initialise board as a 8x8 2D numpy array (matrix)'''
         self.board = np.zeros((8, 8), dtype=np.int8)
-
+        self.black_disk_count = self.white_disk_count = 0
+                
         # centre squares in middle of board
         self.board[3, 3] = self.board[4,4] = Board.WHITE
         self.board[3, 4] = self.board[4,3] = Board.BLACK
@@ -141,7 +142,9 @@ class Board:
 
     def is_game_over(self):
         '''Check if the game is over by looking for available moves for both players'''
-        return not self.all_legal_moves(Board.BLACK) and not self.all_legal_moves(Board.WHITE)
+        black_moves = len(self.all_legal_moves(Board.BLACK))
+        white_moves = len(self.all_legal_moves(Board.WHITE))
+        return black_moves == 0 and white_moves == 0
 
     def evaluate_board(self, player) -> int:
         '''Evaluate the board as per coin parity, mobility & corner value heuristics.'''

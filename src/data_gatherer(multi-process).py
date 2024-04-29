@@ -1,18 +1,17 @@
 from multiprocessing import Pool
 from utils.board import Board
 from AI_Players.MCTS_AI import Node, monte_carlo_tree_search, mcts_move
-from AI_Players.minimax_AI import minimax_move, minimax_simple_move
+from AI_Players.minimax_AI import minimax_move, minimax_noprune_move
 from AI_Players.greedy_AI import greedy_move
 from AI_Players.negamax_AI import negamax_move
 from AI_Players.random_AI import random_move
 from AI_Players.value_matrix_AI import value_matrix_move
 import csv
 
-from DQN import QLearningPlayer
 
-
-agent  = QLearningPlayer(1)
-agent.load_model('models/model_1_20240419-235943.keras')
+#from DQN import QLearningPlayer
+#agent  = QLearningPlayer(1)
+#agent.load_model('models/model_1_20240419-235943.keras')
 
 # Initialise a list to store the results
 results = []
@@ -22,8 +21,8 @@ black_wins = 0
 white_wins = 0
 draws = 0
 
-TOTAL_GAMES = 1000
-BATCH_SIZE = 6
+TOTAL_GAMES = 100
+BATCH_SIZE = 3
 
 def play_game(game_number):
     #try: 
@@ -35,13 +34,13 @@ def play_game(game_number):
         
         while not board.is_game_over():
         
-            if player == Board.BLACK:  # Chosen AI's turn
-                row, col = agent.dqn_move(board, Board.BLACK)
+            if player == Board.BLACK:  # Random AI's turn
+                row, col = mcts_move(board, Board.BLACK, 250)
                 if row is not None and col is not None:
                     board.make_move(row, col, Board.BLACK)
 
-            else:  # Greedy's turn
-                row, col = minimax_move(board, Board.WHITE)
+            else:  # Minimax's turn
+                row, col = greedy_move(board, Board.WHITE)
                 if row is not None and col is not None:
                     board.make_move(row, col, Board.WHITE)
             
@@ -82,7 +81,7 @@ if __name__ == "__main__":
     draws = results.count('Draw')
 
     # Write the results to a file...
-    with open('BATCHresults(DQN-vs-Mini).csv', 'w', newline='') as file:
+    with open('results(MCTS[250]-vs-Greedy).csv', 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["DQN", "Minimax wins", "Draws"])
+        writer.writerow(["MCTS", "Greedy", "Draws"])
         writer.writerow([black_wins, white_wins, draws])

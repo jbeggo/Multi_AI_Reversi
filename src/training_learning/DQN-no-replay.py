@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+import random
 from utils.board import Board
 import tensorflow as tf
 import keras.models as models
@@ -9,15 +10,15 @@ from keras.callbacks import TensorBoard
 import datetime
 
 class QLearningPlayer:
-    def __init__(self, player_id, learning_rate=0.1, discount_factor=1.0):
+    def __init__(self, player_id):
         self.player_id = player_id
-        self.learning_rate = learning_rate
-        self.discount_factor = discount_factor
+        self.learning_rate = 0.01
+        self.discount_factor = 1
         self.num_games_played = 0
 
         self.epsilon = 1.0
         self.min_epsilon = 0.01
-        self.decay = 0.996
+        self.decay = 0.99957
 
         # Create unique log directories or tags for each player
         log_dir = f"logs/{player_id}/{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}"
@@ -36,6 +37,11 @@ class QLearningPlayer:
         file_path = f'models/model_{self.player_id}_{datetime.datetime.now().strftime("%Y%m%d-%H%M%S")}.keras'
         self.model.save(file_path)
         print(f"Model saved to {file_path}")
+    
+    def save_model_static(self):
+        file_path = f'models/Best_Model.keras'
+        self.model.save(file_path)
+        print(f"Model saved to {file_path}")
 
     def load_model(self, file_path):
         # Load the model correctly using the load_model function
@@ -45,7 +51,7 @@ class QLearningPlayer:
     def build_model(self):
         model = models.Sequential([
             Input(shape=(64,)),  # Define the input shape explicitly here
-            Dense(44, activation='tanh'),
+            Dense(256, activation='tanh'),
             Dense(64, activation='tanh')
         ])
         model.compile(optimizer=Adam(learning_rate=0.01), loss='mse')
@@ -61,6 +67,11 @@ class QLearningPlayer:
         avg_q_value = np.mean(q_values)
         with self.summary_writer.as_default():
             tf.summary.scalar('Average_Q_value', avg_q_value, step=step)
+        self.summary_writer.flush()
+    
+    def log_validation(self, wins, step):
+        with self.summary_writer.as_default():
+            tf.summary.scalar('Wins vs Random', wins, step=step)
         self.summary_writer.flush()
     
     def dqn_move(self, board: Board, player: int):
@@ -146,8 +157,8 @@ class QLearningPlayer:
 class Q_env:
     def __init__(self):
         self.board = Board()
-        self.player1 = QLearningPlayer(1)
-        self.player2 = QLearningPlayer(2)  # Assuming player2 is another learning agent or a static policy opponent
+        self.player1 = QLearningPlayer('Black (no replay)')
+        self.player2 = QLearningPlayer('White (no replay)')  
         self.current_player = self.player1
         self.player_color = Board.BLACK  # Starting player
         self.global_step = 0
@@ -175,8 +186,8 @@ class Q_env:
         # Determine the winner and assign rewards
         winner = self.board.get_winner()
         #print(winner)
-        reward_player1 = 1 if winner == 'Black' else -1 if winner == 'White' else 0
-        reward_player2 = -reward_player1
+        reward_player1 = 1 if winner == 'Black' else 0 if winner == 'White' else 0.5
+        reward_player2 = 1 if winner == 'White' else 0 if winner == 'Black' else 0.5
 
         # Learn from the final state of the game
         self.player1.learn(state, action, reward_player1, None, True, self.global_step)  # No next state at the end of the game
@@ -187,7 +198,37 @@ class Q_env:
         self.player1.update_epsilon()
         self.player2.update_epsilon()
 
+    def validate(self, player: QLearningPlayer, episodes) -> int:
+        print("Validating player...")
+        wins = 0
+        for game in range(episodes):
+            self.reset_game()
+            
+            while not self.board.is_game_over():
+                # random turn
+                legal_moves = self.board.all_legal_moves(1)
+                if legal_moves:
+                    action = random.choice(legal_moves)
+                    if action:
+                        self.board.make_move(*action, 1)
+                
+                # dqn turn
+                legal_moves = self.board.all_legal_moves(-1)
+                if legal_moves:
+                    action = player.dqn_move(self.board, -1)
+                    if action:
+                        self.board.make_move(*action, -1)
+
+            # Determine the winner and assign rewards
+            winner = self.board.get_winner()
+            if winner == 'White':
+                wins+= 1
+        
+        print(f"Player won {wins} out of {episodes} games")
+        return wins
+
     def train(self, episodes):
+        best_score_validation = 0
         for game in range(episodes):
             self.reset_game()
 
@@ -202,11 +243,17 @@ class Q_env:
             self.player1.update_game_count()
             self.player2.update_game_count()
 
+            #if (game+1) % 100 == 0:
+                #self.player1.save_model()
+                #self.player2.save_model()
             if (game+1) % 100 == 0:
-                self.player1.save_model()
-                self.player2.save_model()
+                wins = self.validate(self.player2, 100)
+                self.player2.log_validation(wins, self.global_step)
+                if wins > best_score_validation:
+                    best_score_validation = wins
+                    self.player2.save_model_static() 
 
 
 # Example usage
-#environment = Q_env()
-#environment.train(1000)  # Train over x games
+environment = Q_env()
+environment.train(10000)  # Train over x games
