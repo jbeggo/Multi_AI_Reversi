@@ -1,10 +1,10 @@
 from utils.board import Board
-from AI_Players.MCTS_AI import Node, monte_carlo_tree_search, mcts_move
-from AI_Players.minimax_AI import minimax_move, minimax_noprune_move
-from AI_Players.greedy_AI import greedy_move
-from AI_Players.negamax_AI import negamax_move
-from AI_Players.random_AI import random_move
-from AI_Players.value_matrix_AI import value_matrix_move, wipeout_matrix
+from agents.MCTS_AI import Node, monte_carlo_tree_search, mcts_move
+from agents.minimax_AI import minimax_move, minimax_noprune_move
+from agents.greedy_AI import greedy_move
+from agents.negamax_AI import negamax_move
+from agents.random_AI import random_move
+from agents.value_matrix_AI import value_matrix_move, wipeout_matrix
 #from DQN import QLearningPlayer
 import csv
 

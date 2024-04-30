@@ -1,5 +1,4 @@
 from utils.board import Board
-from utils.colors import Colours
 from agents.minimax_AI import minimax_move, minimax_noprune_move
 from agents.random_AI import random_move
 from agents.greedy_AI import greedy_move
@@ -13,6 +12,7 @@ from pygame import gfxdraw
 pygame.init()
 
 class Game:
+    
     WINDOW_WIDTH = 1200
     WINDOW_HEIGHT = 800
 
@@ -21,6 +21,7 @@ class Game:
 
         self.game_board = Board()
 
+        # default grey background and black text
         self.background = (204,204,204)
         self.text_colour = (0,0,0)
 
@@ -28,24 +29,24 @@ class Game:
 
         # pygame window setup: set size, colours, window title
         self.screen = pygame.display.set_mode((Game.WINDOW_WIDTH, Game.WINDOW_HEIGHT))
-        self.screen.fill(Colours.WHITE)
+        self.screen.fill((255, 255, 255))
         pygame.display.flip() # 'flip' is full display update
         pygame.display.set_caption("Reversi AI")
 
         # Load images such as grid lines, starting menu, game over screen
-        self.boardIMG = pygame.image.load("images/board.png")
+        self.boardIMG = pygame.image.load("GUI_assets/board.png")
 
-        self.black_winsIMG = pygame.image.load("images/black_wins.png")
-        self.white_winsIMG = pygame.image.load("images/white_wins.png")
-        self.drawIMG = pygame.image.load("images/draw.png")
+        self.black_winsIMG = pygame.image.load("GUI_assets/black_wins.png")
+        self.white_winsIMG = pygame.image.load("GUI_assets/white_wins.png")
+        self.drawIMG = pygame.image.load("GUI_assets/draw.png")
 
-        self.replay_choiceIMG  = pygame.image.load("images/replay.png")
-        self.menuIMG = pygame.image.load("images/main_menu.png")
-        self.choose_opponentIMG = pygame.image.load("images/choose_AI.png")
-        self.choose_p1IMG = pygame.image.load("images/choose_p1.png")
-        self.choose_p2IMG = pygame.image.load("images/choose_p2.png")
+        self.replay_choiceIMG  = pygame.image.load("GUI_assets/replay.png")
+        self.menuIMG = pygame.image.load("GUI_assets/main_menu.png")
+        self.choose_opponentIMG = pygame.image.load("GUI_assets/choose_AI.png")
+        self.choose_p1IMG = pygame.image.load("GUI_assets/choose_p1.png")
+        self.choose_p2IMG = pygame.image.load("GUI_assets/choose_p2.png")
 
-        # Load font that displays the score
+        # Load score fonts & message fonts
         self.score_font = pygame.font.Font("fonts/Inconsolata-Medium.ttf", 40)
         self.message_font = pygame.font.Font("fonts/Inconsolata-Medium.ttf", 60)
         self.player_font = pygame.font.Font("fonts/Inconsolata-Medium.ttf", 30)
@@ -74,27 +75,13 @@ class Game:
         self.last_move = (0,0)
 
     @staticmethod
-    def fade(screen: pygame.Surface, *surfaceNcoords: tuple[pygame.Surface, tuple[int, int]]):
+    def fade_surface(screen: pygame.Surface, surface: pygame.Surface, coords: tuple[int, int]):
         '''Fade in/out the surface given'''
 
-        for alpha in range(0, 257, 6):
-            for snc in surfaceNcoords:
-                surface, coordinates = snc
-                surface.set_alpha(alpha)
-                screen.blit(surface, coordinates)
-                pygame.time.delay(30)
-            pygame.display.flip()
-
-    @staticmethod
-    def fade_in(screen: pygame.Surface, *surfaceNcoords: tuple[pygame.Surface, tuple[int, int]]):
-        '''Fade in/out the surface given'''
-
-        for alpha in range(0, 257, 6):
-            for snc in surfaceNcoords:
-                surface, coordinates = snc
-                surface.set_alpha(alpha)
-                screen.blit(surface, coordinates)
-                pygame.time.delay(30)
+        for alpha in range(0, 257, 12):
+            surface.set_alpha(alpha)
+            screen.blit(surface, coords)
+            pygame.time.delay(30)
             pygame.display.flip()     
 
     def toggle_high_contrast(self) -> None:
@@ -105,41 +92,41 @@ class Game:
             self.high_contrast = True
             self.background = (13, 12, 12)
             self.text_colour = (255, 245, 0)
-            self.boardIMG = pygame.image.load("images/board(access).png")
-            self.black_winsIMG = pygame.image.load("images/black_wins(access).png")
-            self.white_winsIMG = pygame.image.load("images/white_wins(access).png")
-            self.drawIMG = pygame.image.load("images/draw(access).png")
-            self.replay_choiceIMG  = pygame.image.load("images/replay(access).png")
-            self.menuIMG = pygame.image.load("images/main_menu(access).png")
-            self.choose_opponentIMG = pygame.image.load("images/choose_AI(access).png")
-            self.choose_p1IMG = pygame.image.load("images/choose_p1(access).png")
-            self.choose_p2IMG = pygame.image.load("images/choose_p2(access).png")
+            self.boardIMG = pygame.image.load("GUI_assets/board(access).png")
+            self.black_winsIMG = pygame.image.load("GUI_assets/black_wins(access).png")
+            self.white_winsIMG = pygame.image.load("GUI_assets/white_wins(access).png")
+            self.drawIMG = pygame.image.load("GUI_assets/draw(access).png")
+            self.replay_choiceIMG  = pygame.image.load("GUI_assets/replay(access).png")
+            self.menuIMG = pygame.image.load("GUI_assets/main_menu(access).png")
+            self.choose_opponentIMG = pygame.image.load("GUI_assets/choose_AI(access).png")
+            self.choose_p1IMG = pygame.image.load("GUI_assets/choose_p1(access).png")
+            self.choose_p2IMG = pygame.image.load("GUI_assets/choose_p2(access).png")
         else:
             self.high_contrast = False
             self.background = (204, 204, 204)
             self.text_colour = (0,0,0)
-            self.boardIMG = pygame.image.load("images/board.png")
-            self.black_winsIMG = pygame.image.load("images/black_wins.png")
-            self.white_winsIMG = pygame.image.load("images/white_wins.png")
-            self.drawIMG = pygame.image.load("images/draw.png")
-            self.replay_choiceIMG  = pygame.image.load("images/replay.png")
-            self.menuIMG = pygame.image.load("images/main_menu.png")
-            self.choose_opponentIMG = pygame.image.load("images/choose_AI.png")
-            self.choose_p1IMG = pygame.image.load("images/choose_p1.png")
-            self.choose_p2IMG = pygame.image.load("images/choose_p2.png")
+            self.boardIMG = pygame.image.load("GUI_assets/board.png")
+            self.black_winsIMG = pygame.image.load("GUI_assets/black_wins.png")
+            self.white_winsIMG = pygame.image.load("GUI_assets/white_wins.png")
+            self.drawIMG = pygame.image.load("GUI_assets/draw.png")
+            self.replay_choiceIMG  = pygame.image.load("GUI_assets/replay.png")
+            self.menuIMG = pygame.image.load("GUI_assets/main_menu.png")
+            self.choose_opponentIMG = pygame.image.load("GUI_assets/choose_AI.png")
+            self.choose_p1IMG = pygame.image.load("GUI_assets/choose_p1.png")
+            self.choose_p2IMG = pygame.image.load("GUI_assets/choose_p2.png")
 
     def draw_black_disk(self, x: int, y: int, r: int):
         if not self.high_contrast:
-            gfxdraw.aacircle(self.screen, x, y, r, Colours.BLACK)
-            gfxdraw.filled_circle(self.screen, x, y, r, Colours.BLACK)
+            gfxdraw.aacircle(self.screen, x, y, r, (0, 0, 0))
+            gfxdraw.filled_circle(self.screen, x, y, r, (0, 0, 0))
         else:
             gfxdraw.aacircle(self.screen, x, y, r, (0, 255, 255))
             gfxdraw.filled_circle(self.screen, x, y, r, (0, 255, 255))
    
     def draw_white_disk(self, x: int, y: int, r: int):
         if not self.high_contrast:
-            gfxdraw.aacircle(self.screen, x, y, r, Colours.WHITE)
-            gfxdraw.filled_circle(self.screen, x, y, r, Colours.WHITE)
+            gfxdraw.aacircle(self.screen, x, y, r, (255, 255, 255))
+            gfxdraw.filled_circle(self.screen, x, y, r, (255, 255, 255))
         else:
             gfxdraw.aacircle(self.screen, x, y, r, (255, 192, 203))
             gfxdraw.filled_circle(self.screen, x, y, r, (255, 192, 203))
@@ -183,11 +170,10 @@ class Game:
 
         if event.key not in (pygame.K_r, pygame.K_q, pygame.K_ESCAPE): return
 
-        # fade out the screen
-        dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
-                                            Game.WINDOW_HEIGHT  ))
-        dummy_surface.fill(self.background)
-        Game.fade(self.screen, (dummy_surface, (0, 0)))
+        # fade out entire screen
+        fade_intergrade = pygame.Surface((1200, 800))
+        fade_intergrade.fill(self.background)
+        Game.fade_surface(self.screen, fade_intergrade, (0, 0))
 
         if event.key == pygame.K_q:
             self.running = False
@@ -244,13 +230,13 @@ class Game:
         if self.computer_vs_computer:
             # blacks turn
             if self.turn == 1:
-                player_text = self.message_font.render(self.chosen_p1, True, text_color)
-                thinking_text = self.message_font.render(f"Thinking...", True, text_color)
+                player_text = self.score_font.render(self.chosen_p1, True, text_color)
+                thinking_text = self.score_font.render(f"thinking...", True, text_color)
                 #self.screen.blit(player_text, (820, 190))
             # white players' turn
             else:
-                player_text = self.message_font.render(self.chosen_p2, True, text_color)
-                thinking_text = self.message_font.render(f"Thinking...", True, text_color)
+                player_text = self.score_font.render(self.chosen_p2, True, text_color)
+                thinking_text = self.score_font.render(f"thinking...", True, text_color)
                 #self.screen.blit(player_text, (820, 190))
             
             # display who's deciding
@@ -350,17 +336,17 @@ class Game:
 
             if self.turn == Board.BLACK:
                 if not self.high_contrast:
-                    pygame.draw.circle(surface,(*Colours.BLACK, 50),(37.5, 37.5), 32.5)
+                    pygame.draw.circle(surface,(*(0, 0, 0), 50),(37.5, 37.5), 32.5)
                 else:
                     pygame.draw.circle(surface,(*(0, 255, 255), 50),(37.5, 37.5), 32.5)
 
             elif self.turn == Board.WHITE:
                 if not self.high_contrast:
-                    pygame.draw.circle(surface,(*Colours.BLACK, 50),(37.5, 37.5), 32.5)
-                    pygame.draw.circle(surface,(*Colours.WHITE, 50),(37.5, 37.5), 30)
+                    pygame.draw.circle(surface,(*(0, 0, 0), 50),(37.5, 37.5), 32.5)
+                    pygame.draw.circle(surface,(*(255, 255, 255), 50),(37.5, 37.5), 30)
                 else:
                     pygame.draw.circle(surface,(*(255, 192, 203), 50),(37.5, 37.5), 32.5)
-                    pygame.draw.circle(surface,(*Colours.WHITE, 50),(37.5, 37.5), 30)
+                    pygame.draw.circle(surface,(*(255, 255, 255), 50),(37.5, 37.5), 30)
             self.screen.blit(surface, (x, y))
 
             # Store the position of the preview
@@ -383,15 +369,15 @@ class Game:
         '''Display the game over screen in accordance with the game result.'''
 
         if self.game_board.black_disk_count > self.game_board.white_disk_count: # black won
-            Game.fade(self.screen, (self.black_winsIMG, (725, 250)))
+            Game.fade_surface(self.screen, self.black_winsIMG, (725, 250))
 
         elif self.game_board.black_disk_count < self.game_board.white_disk_count:   # white won
-            Game.fade(self.screen, (self.white_winsIMG, (725, 250)))
+            Game.fade_surface(self.screen, self.white_winsIMG, (725, 250))
 
         else:   # draw
-            Game.fade(self.screen, (self.drawIMG, (725, 250)))
+            Game.fade_surface(self.screen, self.drawIMG, (725, 250))
 
-        Game.fade(self.screen, (self.replay_choiceIMG, (840, 410)))
+        Game.fade_surface(self.screen, self.replay_choiceIMG, (840, 410))
         self.is_game_over = True
 
     def agent_turn(self, player, agent) -> None:
@@ -468,7 +454,7 @@ class Game:
             dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
                                             Game.WINDOW_HEIGHT  ))
             dummy_surface.fill(self.background)
-            Game.fade(self.screen, (dummy_surface, (0, 0)))
+            Game.fade_surface(self.screen, dummy_surface, (0, 0))
 
             # pvp can jump straight in
             if self.player_vs_player:
@@ -508,7 +494,7 @@ class Game:
         dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
                                         Game.WINDOW_HEIGHT  ))
         dummy_surface.fill(self.background)
-        Game.fade(self.screen, (dummy_surface, (0, 0)))
+        Game.fade_surface(self.screen, dummy_surface, (0, 0))
 
         self.display_board()
             
@@ -547,7 +533,7 @@ class Game:
         dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
                                         Game.WINDOW_HEIGHT  ))
         dummy_surface.fill(self.background)
-        Game.fade(self.screen, (dummy_surface, (0, 0)))
+        Game.fade_surface(self.screen, dummy_surface, (0, 0))
  
     def choose_p2(self, event) -> None:
         ''' Handles the choice of AI opponent for AI vs AI player 2 '''
@@ -584,7 +570,7 @@ class Game:
         dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
                                         Game.WINDOW_HEIGHT  ))
         dummy_surface.fill(self.background)
-        Game.fade(self.screen, (dummy_surface, (0, 0)))
+        Game.fade_surface(self.screen, dummy_surface, (0, 0))
 
         self.display_board() # jump in after p2 chosen
 
@@ -677,11 +663,15 @@ class Game:
             # AI plays black & white w/ arbitrary slowdown factor
             if self.computer_vs_computer and self.players_set:
                 self.display_players()
+                self.display_thinking()
                 self.agent_turn(Board.BLACK, self.chosen_p1)
                 time.sleep(1)
+                self.clear_thinking()
                 self.display_turn()
+                self.display_thinking()
                 self.agent_turn(Board.WHITE, self.chosen_p2)
                 time.sleep(1)
+                self.clear_thinking()
             
             # finally load previews in pvp mode
                 if self.player_vs_player:

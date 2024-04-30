@@ -32,6 +32,6 @@ Agents:
    ```
    pip install -r requirements
    ```
-5. Run the `game.py` to start the application
+5. Run `game.py` to start the application
 
 > High COntrast mode is enabled by pressing 'c' on the main menu 
