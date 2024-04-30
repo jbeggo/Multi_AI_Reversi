@@ -2,8 +2,8 @@
 
 Play reversi against multiple AI opponents:
 
-## What is reversi
-Reversi is classical zero-sum board game with an 8x8 board, with 64 discs total of '2-tone' black and white. Win by having more of your pieces on the board at the end
+## What is reversi/othello?
+Reversi (aka branded version othello) is classical zero-sum board game with an 8x8 board, with 64 discs total of '2-tone' black and white. Win by having more of your pieces on the board at the end
 
 <br>
 
@@ -24,8 +24,11 @@ Agents:
 - Positional value matrix players
 - Q learning neural network
 
+#### Pit The Agents Against Eachother
 
-### How to Play the Game 🎮
+Select any 2 above agents and watch them duke it out
+
+### How To Use The App
 1. Clone the repository or download the whole folder
 2. Install Python3 with 'pip' package manager
 3. Navigate to the repository folder in a terminal (or open a terminal there) and enter:
@@ -34,4 +37,6 @@ Agents:
    ```
 5. Run `game.py` to start the application
 
-> High COntrast mode is enabled by pressing 'c' on the main menu 
+### Tips for Playing
+> High Contrast mode is enabled by pressing 'c' on the main menu
+> You can press 'escape' at anytime to restart the app
