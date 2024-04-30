@@ -46,9 +46,9 @@ class Game:
         self.choose_p2IMG = pygame.image.load("images/choose_p2.png")
 
         # Load font that displays the score
-        self.score_font = pygame.font.Font("Gotham-Font/GothamLight.ttf", 40)
-        self.message_font = pygame.font.Font("Gotham-Font/GothamLight.ttf", 60)
-        self.player_font = pygame.font.Font("Gotham-Font/GothamLight.ttf", 20)
+        self.score_font = pygame.font.Font("fonts/Inconsolata-Medium.ttf", 40)
+        self.message_font = pygame.font.Font("fonts/Inconsolata-Medium.ttf", 60)
+        self.player_font = pygame.font.Font("fonts/Inconsolata-Medium.ttf", 30)
 
         self.preview_positions = []
         self.is_single_player = False
@@ -75,7 +75,7 @@ class Game:
 
     @staticmethod
     def fade(screen: pygame.Surface, *surfaceNcoords: tuple[pygame.Surface, tuple[int, int]]):
-        '''Fade-in surface(s) on a given screen, at the specified coordinates.'''
+        '''Fade in/out the surface given'''
 
         for alpha in range(0, 257, 6):
             for snc in surfaceNcoords:
@@ -83,7 +83,19 @@ class Game:
                 surface.set_alpha(alpha)
                 screen.blit(surface, coordinates)
                 pygame.time.delay(30)
-            pygame.display.flip()        
+            pygame.display.flip()
+
+    @staticmethod
+    def fade_in(screen: pygame.Surface, *surfaceNcoords: tuple[pygame.Surface, tuple[int, int]]):
+        '''Fade in/out the surface given'''
+
+        for alpha in range(0, 257, 6):
+            for snc in surfaceNcoords:
+                surface, coordinates = snc
+                surface.set_alpha(alpha)
+                screen.blit(surface, coordinates)
+                pygame.time.delay(30)
+            pygame.display.flip()     
 
     def toggle_high_contrast(self) -> None:
         '''Toggle the high contrast mode of the game for accessibility'''
@@ -116,8 +128,6 @@ class Game:
             self.choose_p1IMG = pygame.image.load("images/choose_p1.png")
             self.choose_p2IMG = pygame.image.load("images/choose_p2.png")
 
-        
-
     def draw_black_disk(self, x: int, y: int, r: int):
         if not self.high_contrast:
             gfxdraw.aacircle(self.screen, x, y, r, Colours.BLACK)
@@ -134,28 +144,30 @@ class Game:
             gfxdraw.aacircle(self.screen, x, y, r, (255, 192, 203))
             gfxdraw.filled_circle(self.screen, x, y, r, (255, 192, 203))
 
-    def do_mouse_click(self) -> None:
-        '''Handle events following mouse click on the board'''
+    def mouse_to_grid(self, x: int, y: int) -> tuple[int, int]:
+        '''Convert mouse position to reversi grid square coords'''
+        col = (x - 100) // 75 
+        row = (y - 100) // 75
+        
+        return row, col
+    
+    def click(self) -> None:
+        '''Handles user input with the mouse on board'''
 
-        mx, my = pygame.mouse.get_pos()
-        mx -= 100
-        my -= 100
-        r = my // 75
-        c = mx // 75
+        x, y = pygame.mouse.get_pos()
+        # convert mouse coords to board coords
+        move = self.mouse_to_grid(x, y)
 
         possible_moves = self.game_board.all_legal_moves(self.turn)
-        if (r, c) not in possible_moves:   return
+        
+        if move not in possible_moves:
+            return
 
-        self.last_move = (r, c)
-        self.game_board.make_move(r, c, self.turn)
-        self.preview_set = False
+        self.last_move = move
+        self.game_board.make_move(*move, self.turn)
 
-        # draws over old move previews
-        for pos in possible_moves:
-            row, col = pos
-            x = 100 + 75 * col
-            y = 100 + 75 * row
-            pygame.draw.rect(self.screen, self.background, pygame.Rect(x+4, y+4, 67, 67))
+        # clear old previews
+        self.clear_preview()
 
         self.turn *= -1
 
@@ -169,7 +181,7 @@ class Game:
                 2. Or Quits the Application.
         '''
 
-        if event.key not in (pygame.K_r, pygame.K_q): return
+        if event.key not in (pygame.K_r, pygame.K_q, pygame.K_ESCAPE): return
 
         # fade out the screen
         dummy_surface = pygame.Surface( (Game.WINDOW_WIDTH, 
@@ -225,7 +237,7 @@ class Game:
 
         text_surface = pygame.Surface((100, 40))
         text_surface.fill(self.background)
-        self.screen.blit(text_surface, (860, 210))
+        self.screen.blit(text_surface, (840, 210))
 
         text_color = self.text_colour
         # for AIvsAI mode
@@ -242,7 +254,7 @@ class Game:
                 #self.screen.blit(player_text, (820, 190))
             
             # display who's deciding
-            self.screen.blit(player_text, (820, 140))
+            self.screen.blit(player_text, (800, 140))
         
         # for pv AI mode
         elif self.is_single_player:
@@ -251,39 +263,39 @@ class Game:
         
         #thinking_text = self.message_font.render(f"Thinking...", True, text_color)
         
-        self.screen.blit(thinking_text, (820, 210))
+        self.screen.blit(thinking_text, (800, 210))
         
         pygame.display.flip()
 
     def clear_thinking(self):
         '''Clear the AI decision time message'''
         
-        pygame.draw.rect(self.screen, self.background, pygame.Rect(820, 130, 300, 300))
+        pygame.draw.rect(self.screen, self.background, pygame.Rect(800, 130, 350, 300))
 
         pygame.display.flip()
 
     def display_turn(self) -> None:
-        '''Blit a message while the AI player concocts a move to make'''
+        '''Display the current active player in bottom left'''
 
         #text_surface = pygame.Surface((60, 40))
         #text_surface.fill(self.background)
         #self.screen.blit(text_surface, (30, 720))
 
-        pygame.draw.rect(self.screen, self.background, pygame.Rect(20, 710, 300, 60))
+        pygame.draw.rect(self.screen, self.background, pygame.Rect(90, 710, 300, 60))
         text_color = self.text_colour
         if not self.high_contrast:
             turn = "Black's" if self.turn == 1 else "White's"
         else:
             turn = "Cyan's" if self.turn == 1 else "Pinks's"
         turn_text = self.score_font.render(f"{turn} turn!", True, text_color)
-        self.screen.blit(turn_text, (30, 720))
+        self.screen.blit(turn_text, (90, 720))
         
         pygame.display.flip()
 
     def clear_turn_text(self):
-        '''Clear the AI decision time message'''
+        '''Clear the player turn message'''
         
-        pygame.draw.rect(self.screen, (0,0,0), pygame.Rect(20, 710, 300, 60))
+        pygame.draw.rect(self.screen, (0,0,0), pygame.Rect(90, 710, 300, 60))
 
         pygame.display.flip()
 
@@ -382,7 +394,7 @@ class Game:
         Game.fade(self.screen, (self.replay_choiceIMG, (840, 410)))
         self.is_game_over = True
 
-    def computer_turn(self, player, agent) -> None:
+    def agent_turn(self, player, agent) -> None:
         ''' Code to run when computer player's turn '''
         
         # determine the move based on the chosen AI
@@ -599,11 +611,17 @@ class Game:
                     self.running = False
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    self.do_mouse_click()
+                    self.click()
 
+                # press esc at anytime to restart
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                    self.game_over(event)
+                
+                # handle end of game event
                 elif self.is_game_over and event.type == pygame.KEYDOWN:
                     self.game_over(event)
 
+                # select game mode on main menu splash
                 elif not self.game_mode_chosen and event.type == pygame.KEYDOWN:
                     self.choose_game_mode(event)
 
@@ -645,25 +663,29 @@ class Game:
                 self.display_opponent()
 
             # Chosen AI plays white against human
+            if self.is_single_player and self.turn == Board.BLACK:
+                # only need previews for humans
+                if self.is_single_player or self.player_vs_player:
+                    self.move_preview()
             if self.is_single_player and self.turn == Board.WHITE:
                 self.display_thinking()
                 time.sleep(2)
-                self.computer_turn(Board.WHITE,self.chosen_AI)
+                self.agent_turn(Board.WHITE,self.chosen_AI)
                 self.clear_thinking()
                 #self.clear_turn_text()
 
             # AI plays black & white w/ arbitrary slowdown factor
             if self.computer_vs_computer and self.players_set:
                 self.display_players()
-                self.computer_turn(Board.BLACK, self.chosen_p1)
-                time.sleep(0.1)
+                self.agent_turn(Board.BLACK, self.chosen_p1)
+                time.sleep(1)
                 self.display_turn()
-                self.computer_turn(Board.WHITE, self.chosen_p2)
-                time.sleep(0.1)
+                self.agent_turn(Board.WHITE, self.chosen_p2)
+                time.sleep(1)
             
-            # only need previews for humans
-            if self.is_single_player or self.player_vs_player:
-                self.move_preview()
+            # finally load previews in pvp mode
+                if self.player_vs_player:
+                    self.move_preview()
 
             # game over?
             if self.game_board.is_game_over():

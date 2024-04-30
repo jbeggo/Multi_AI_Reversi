@@ -64,10 +64,10 @@ class Board:
                 if self.board[r, c] == player:
                     new_moves = self.legal_moves(r, c, player)
                     full_legal_moves.extend(new_moves)
-                    
+
         # remove duplicates from moves list
         full_legal_moves = list(set(full_legal_moves))
-        print(f"All legal moves for: {player}, :{full_legal_moves}")
+        #print(f"All legal moves for: {player}, :{full_legal_moves}")
         return full_legal_moves
 
     def legal_moves(self, r, c, player):
