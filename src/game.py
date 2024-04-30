@@ -1,11 +1,12 @@
 from utils.board import Board
 from utils.colors import Colours
-from AI_Players.minimax_AI import minimax_move, minimax_noprune_move
-from AI_Players.random_AI import random_move
-from AI_Players.greedy_AI import greedy_move
-from AI_Players.negamax_AI import negamax_move
-from AI_Players.MCTS_AI import mcts_move
-from AI_Players.value_matrix_AI import value_matrix_move
+from agents.minimax_AI import minimax_move, minimax_noprune_move
+from agents.random_AI import random_move
+from agents.greedy_AI import greedy_move
+from agents.negamax_AI import negamax_move
+from agents.MCTS_AI import mcts_move
+from agents.value_matrix_AI import evolutionary_matrix_move, wipeout_matrix_move
+from agents.dqn_AI import Qagent
 import pygame, time
 from pygame import gfxdraw
 
@@ -90,7 +91,8 @@ class Game:
         if not self.high_contrast:
             # set high contrast mode
             self.high_contrast = True
-            
+            self.background = (13, 12, 12)
+            self.text_colour = (255, 245, 0)
             self.boardIMG = pygame.image.load("images/board(access).png")
             self.black_winsIMG = pygame.image.load("images/black_wins(access).png")
             self.white_winsIMG = pygame.image.load("images/white_wins(access).png")
@@ -102,6 +104,8 @@ class Game:
             self.choose_p2IMG = pygame.image.load("images/choose_p2(access).png")
         else:
             self.high_contrast = False
+            self.background = (204, 204, 204)
+            self.text_colour = (0,0,0)
             self.boardIMG = pygame.image.load("images/board.png")
             self.black_winsIMG = pygame.image.load("images/black_wins.png")
             self.white_winsIMG = pygame.image.load("images/white_wins.png")
@@ -112,13 +116,23 @@ class Game:
             self.choose_p1IMG = pygame.image.load("images/choose_p1.png")
             self.choose_p2IMG = pygame.image.load("images/choose_p2.png")
 
+        
+
     def draw_black_disk(self, x: int, y: int, r: int):
-        gfxdraw.aacircle(self.screen, x, y, r, Colours.BLACK)
-        gfxdraw.filled_circle(self.screen, x, y, r, Colours.BLACK)
+        if not self.high_contrast:
+            gfxdraw.aacircle(self.screen, x, y, r, Colours.BLACK)
+            gfxdraw.filled_circle(self.screen, x, y, r, Colours.BLACK)
+        else:
+            gfxdraw.aacircle(self.screen, x, y, r, (0, 255, 255))
+            gfxdraw.filled_circle(self.screen, x, y, r, (0, 255, 255))
    
     def draw_white_disk(self, x: int, y: int, r: int):
-        gfxdraw.aacircle(self.screen, x, y, r, Colours.WHITE)
-        gfxdraw.filled_circle(self.screen, x, y, r, Colours.WHITE)
+        if not self.high_contrast:
+            gfxdraw.aacircle(self.screen, x, y, r, Colours.WHITE)
+            gfxdraw.filled_circle(self.screen, x, y, r, Colours.WHITE)
+        else:
+            gfxdraw.aacircle(self.screen, x, y, r, (255, 192, 203))
+            gfxdraw.filled_circle(self.screen, x, y, r, (255, 192, 203))
 
     def do_mouse_click(self) -> None:
         '''Handle events following mouse click on the board'''
@@ -241,7 +255,10 @@ class Game:
 
         pygame.draw.rect(self.screen, self.background, pygame.Rect(20, 710, 300, 60))
         text_color = self.text_colour
-        turn = "Black's" if self.turn == 1 else "White's"
+        if not self.high_contrast:
+            turn = "Black's" if self.turn == 1 else "White's"
+        else:
+            turn = "Cyan's" if self.turn == 1 else "Pinks's"
         turn_text = self.score_font.render(f"{turn} turn!", True, text_color)
         self.screen.blit(turn_text, (30, 720))
         
@@ -299,12 +316,18 @@ class Game:
             y = 100 + 75 * r
 
             if self.turn == Board.BLACK:
-                pygame.draw.circle(surface,(*Colours.BLACK, 50),(37.5, 37.5), 32.5)
+                if not self.high_contrast:
+                    pygame.draw.circle(surface,(*Colours.BLACK, 50),(37.5, 37.5), 32.5)
+                else:
+                    pygame.draw.circle(surface,(*(0, 255, 255), 50),(37.5, 37.5), 32.5)
 
             elif self.turn == Board.WHITE:
-                pygame.draw.circle(surface,(*Colours.BLACK, 50),(37.5, 37.5), 32.5)
-                pygame.draw.circle(surface,(*Colours.WHITE, 50),(37.5, 37.5), 30)
-
+                if not self.high_contrast:
+                    pygame.draw.circle(surface,(*Colours.BLACK, 50),(37.5, 37.5), 32.5)
+                    pygame.draw.circle(surface,(*Colours.WHITE, 50),(37.5, 37.5), 30)
+                else:
+                    pygame.draw.circle(surface,(*(255, 192, 203), 50),(37.5, 37.5), 32.5)
+                    pygame.draw.circle(surface,(*Colours.WHITE, 50),(37.5, 37.5), 30)
             self.screen.blit(surface, (x, y))
 
             # Store the position of the preview
@@ -352,12 +375,17 @@ class Game:
             r, c = minimax_noprune_move(self.game_board, player)
         elif chosen_AI == "minimax":
             r, c = minimax_move(self.game_board, player)
-        elif chosen_AI == "mcts-250":
+        elif chosen_AI == "mcts-100":
             r, c = mcts_move(self.game_board, player, 250)
-        elif chosen_AI == "mcts-500":
+        elif chosen_AI == "mcts-250":
             r, c = mcts_move(self.game_board, player, 500)
-        elif chosen_AI == "value matrix":
-            r, c = value_matrix_move(self.game_board, player)
+        elif chosen_AI == "wipeout matrix":
+            r, c = wipeout_matrix_move(self.game_board, player)
+        elif chosen_AI == "evolutionary matrix":
+            r, c = evolutionary_matrix_move(self.game_board, player)
+        elif chosen_AI == "Q-Learner NN":
+            r, c = self.Qagent.dqn_move(self.game_board, player)
+
 
         self.preview_set = False
         
@@ -413,7 +441,7 @@ class Game:
     def choose_opponent(self, event) -> None:
         ''' Handles the choice of AI opponent for Player Vs AI mode '''
 
-        if event.key not in (range(pygame.K_1, pygame.K_9)): # if not number key pressed
+        if event.key not in (range(pygame.K_0, pygame.K_9 + 1)): # if not number key pressed
             return
         
         if event.key == pygame.K_1:
@@ -421,17 +449,23 @@ class Game:
         elif event.key == pygame.K_2:
             self.chosen_AI = "greedy"
         elif event.key == pygame.K_3:
-            self.chosen_AI = "negamax"
+            self.chosen_AI = "negamax [2]"
         elif event.key == pygame.K_4:
-            self.chosen_AI = "simple minimax"
+            self.chosen_AI = "minimax [2]"
         elif event.key == pygame.K_5:
-            self.chosen_AI = "minimax"
+            self.chosen_AI = "minimax [3]"
         elif event.key == pygame.K_6:
-            self.chosen_AI = "mcts-250"
+            self.chosen_AI = "mcts-100"
         elif event.key == pygame.K_7:
-            self.chosen_AI = "mcts-500"
+            self.chosen_AI = "mcts-250"
         elif event.key == pygame.K_8:
-            self.chosen_AI = "value matrix"
+            self.chosen_AI = "wipeout matrix"
+        elif event.key == pygame.K_9:
+            self.chosen_AI = "evolutionary matrix"
+        elif event.key == pygame.K_0:
+            self.chosen_AI = "Q-Learner NN"
+            self.Qagent = Qagent()
+            self.Qagent.load_model("models/Best_Model.keras")
         
         self.opponent_chosen = True
 
@@ -454,17 +488,23 @@ class Game:
         elif event.key == pygame.K_2:
             self.chosen_p1 = "greedy"
         elif event.key == pygame.K_3:
-            self.chosen_p1 = "negamax"
+            self.chosen_p1 = "negamax [2]"
         elif event.key == pygame.K_4:
-            self.chosen_p1 = "simple minimax"
+            self.chosen_p1 = "minimax [2]"
         elif event.key == pygame.K_5:
-            self.chosen_p1 = "minimax"
+            self.chosen_p1 = "minimax [3]"
         elif event.key == pygame.K_6:
-            self.chosen_p1 = "mcts-250"
+            self.chosen_p1 = "mcts-100"
         elif event.key == pygame.K_7:
-            self.chosen_p1 = "mcts-500"
+            self.chosen_p1 = "mcts-250"
         elif event.key == pygame.K_8:
-            self.chosen_p1 = "value matrix"
+            self.chosen_p1 = "wipeout matrix"
+        elif event.key == pygame.K_9:
+            self.chosen_p1 = "evolutionary matrix"
+        elif event.key == pygame.K_0:
+            self.chosen_p1 = "Q-Learner NN"
+            self.Qagent = Qagent()
+            self.Qagent.load_model("models/Best_Model.keras")
 
         self.p1_set = True
 
@@ -476,7 +516,7 @@ class Game:
     def choose_p2(self, event) -> None:
         ''' Handles the choice of AI opponent for AI vs AI player 2 '''
 
-        if event.key not in (range(pygame.K_1, pygame.K_9)): # if not number key pressed
+        if event.key not in (range(pygame.K_0, pygame.K_9 + 1)): # if not number key pressed
             return
         
         if event.key == pygame.K_1:
@@ -484,17 +524,23 @@ class Game:
         elif event.key == pygame.K_2:
             self.chosen_p2 = "greedy"
         elif event.key == pygame.K_3:
-            self.chosen_p2 = "negamax"
+            self.chosen_p2 = "negamax [2]"
         elif event.key == pygame.K_4:
-            self.chosen_p2 = "simple minimax"
+            self.chosen_p2 = "minimax [2]"
         elif event.key == pygame.K_5:
-            self.chosen_p2 = "minimax"
+            self.chosen_p2 = "minimax [3]"
         elif event.key == pygame.K_6:
-            self.chosen_p2 = "mcts-250"
+            self.chosen_p2 = "mcts-100"
         elif event.key == pygame.K_7:
-            self.chosen_p2 = "mcts-500"
+            self.chosen_p2 = "mcts-250"
         elif event.key == pygame.K_8:
-            self.chosen_p2 = "value matrix"
+            self.chosen_p2 = "wipeout matrix"
+        elif event.key == pygame.K_9:
+            self.chosen_p2 = "evolutionary matrix"
+        elif event.key == pygame.K_0:
+            self.chosen_p2 = "Q-Learner NN"
+            self.Qagent = Qagent()
+            self.Qagent.load_model("models/Best_Model.keras")
 
         self.p2_set = True
         self.players_set = True
