@@ -182,15 +182,9 @@ class Game:
             return
         
         '''Reset game init'''
-        self.turn = Board.BLACK
-        self.is_single_player = False
-        self.game_mode_chosen = False
-        self.is_game_over = False
-        self.opponent_chosen = False
-        self.chosen_AI = None
-        self.game_board = Board() # create a new fresh board
+        self.__init__()
 
-        self.display_starting_pieces()
+        self.display_board()
         self.last_move = (0,0)
 
     def display_disks(self) -> None:
@@ -215,26 +209,48 @@ class Game:
 
         dummy_surface = pygame.Surface((60, 40))
         dummy_surface.fill(self.background)
-        self.screen.blit(dummy_surface, (885, 510))
-        self.screen.blit(dummy_surface, (1060, 510))
+        self.screen.blit(dummy_surface, (885, 550))
+        self.screen.blit(dummy_surface, (1060, 550))
 
         text_color = self.text_colour
         black_disc_count = self.score_font.render(f"{self.game_board.black_disk_count}", True, text_color)
         white_disc_count = self.score_font.render(f"{self.game_board.white_disk_count}", True, text_color)
-        self.screen.blit(black_disc_count, (885, 510))
-        self.screen.blit(white_disc_count, (1060, 510))
+        self.screen.blit(black_disc_count, (885, 550))
+        self.screen.blit(white_disc_count, (1060, 550))
         
         pygame.display.flip()
 
     def display_thinking(self) -> None:
         '''Blit a message while the AI player concocts a move to make'''
 
-        text_surface = pygame.Surface((60, 40))
+        text_surface = pygame.Surface((100, 40))
         text_surface.fill(self.background)
         self.screen.blit(text_surface, (860, 210))
 
         text_color = self.text_colour
-        thinking_text = self.message_font.render(f"Thinking...", True, text_color)
+        # for AIvsAI mode
+        if self.computer_vs_computer:
+            # blacks turn
+            if self.turn == 1:
+                player_text = self.message_font.render(self.chosen_p1, True, text_color)
+                thinking_text = self.message_font.render(f"Thinking...", True, text_color)
+                #self.screen.blit(player_text, (820, 190))
+            # white players' turn
+            else:
+                player_text = self.message_font.render(self.chosen_p2, True, text_color)
+                thinking_text = self.message_font.render(f"Thinking...", True, text_color)
+                #self.screen.blit(player_text, (820, 190))
+            
+            # display who's deciding
+            self.screen.blit(player_text, (820, 140))
+        
+        # for pv AI mode
+        elif self.is_single_player:
+            player_text = self.message_font.render(self.chosen_AI, True, text_color)
+            thinking_text = self.message_font.render(f"Thinking...", True, text_color)
+        
+        #thinking_text = self.message_font.render(f"Thinking...", True, text_color)
+        
         self.screen.blit(thinking_text, (820, 210))
         
         pygame.display.flip()
@@ -242,7 +258,7 @@ class Game:
     def clear_thinking(self):
         '''Clear the AI decision time message'''
         
-        pygame.draw.rect(self.screen, self.background, pygame.Rect(820, 200, 300, 100))
+        pygame.draw.rect(self.screen, self.background, pygame.Rect(820, 130, 300, 300))
 
         pygame.display.flip()
 
@@ -285,13 +301,18 @@ class Game:
     def display_players(self) -> None:
         '''Display the current AI players below the score text'''
 
+        text_surface = pygame.Surface((150, 50))
+        text_surface.fill(self.background)
+        self.screen.blit(text_surface, (820, 600))
+        self.screen.blit(text_surface, (970, 600))
+
         text_color = self.text_colour
 
         p1_name = self.player_font.render(f"{self.chosen_p1}", True, text_color)
         p2_name = self.player_font.render(f"{self.chosen_p2}", True, text_color)
 
-        self.screen.blit(p1_name, (885, 560)) 
-        self.screen.blit(p2_name, (1060, 560))  
+        self.screen.blit(p1_name, (820, 600)) 
+        self.screen.blit(p2_name, (970, 600))  
         
         pygame.display.flip()
 
@@ -361,29 +382,29 @@ class Game:
         Game.fade(self.screen, (self.replay_choiceIMG, (840, 410)))
         self.is_game_over = True
 
-    def computer_turn(self, player, chosen_AI) -> None:
+    def computer_turn(self, player, agent) -> None:
         ''' Code to run when computer player's turn '''
         
         # determine the move based on the chosen AI
-        if chosen_AI == "random":
+        if agent == "random":
             r, c = random_move(self.game_board, player)
-        elif chosen_AI == "greedy":
+        elif agent == "greedy":
             r, c = greedy_move(self.game_board, player)
-        elif chosen_AI == "negamax":
+        elif agent == "negamax [2]":
             r, c = negamax_move(self.game_board, player)
-        elif chosen_AI == "simple minimax":
-            r, c = minimax_noprune_move(self.game_board, player)
-        elif chosen_AI == "minimax":
-            r, c = minimax_move(self.game_board, player)
-        elif chosen_AI == "mcts-100":
+        elif agent == "minimax [2]":
+            r, c = minimax_noprune_move(self.game_board, player, 2)
+        elif agent == "minimax [3]":
+            r, c = minimax_move(self.game_board, player, 3)
+        elif agent == "mcts-100":
+            r, c = mcts_move(self.game_board, player, 100)
+        elif agent == "mcts-250":
             r, c = mcts_move(self.game_board, player, 250)
-        elif chosen_AI == "mcts-250":
-            r, c = mcts_move(self.game_board, player, 500)
-        elif chosen_AI == "wipeout matrix":
+        elif agent == "wipeout matrix":
             r, c = wipeout_matrix_move(self.game_board, player)
-        elif chosen_AI == "evolutionary matrix":
+        elif agent == "evolutionary matrix":
             r, c = evolutionary_matrix_move(self.game_board, player)
-        elif chosen_AI == "Q-Learner NN":
+        elif agent == "Q-Learner NN":
             r, c = self.Qagent.dqn_move(self.game_board, player)
 
 
@@ -391,9 +412,12 @@ class Game:
         
         # cannot move (skip)
         if (r,c) == (None,None):
+            print(f"{agent} cannot move, skipping turn")
+            self.turn *= -1
             return
         
         self.last_move = (r, c)
+        print(f"{agent} attempts move: {r, c}")
         self.game_board.make_move(r, c, self.turn)
         self.turn *= -1
 
@@ -436,7 +460,7 @@ class Game:
 
             # pvp can jump straight in
             if self.player_vs_player:
-                self.display_starting_pieces()
+                self.display_board()
     
     def choose_opponent(self, event) -> None:
         ''' Handles the choice of AI opponent for Player Vs AI mode '''
@@ -474,7 +498,7 @@ class Game:
         dummy_surface.fill(self.background)
         Game.fade(self.screen, (dummy_surface, (0, 0)))
 
-        self.display_starting_pieces()
+        self.display_board()
             
     def choose_p1(self, event) -> None:
         ''' Handles the choice of AI opponent for AI vs AI player 1 '''
@@ -550,9 +574,9 @@ class Game:
         dummy_surface.fill(self.background)
         Game.fade(self.screen, (dummy_surface, (0, 0)))
 
-        self.display_starting_pieces() # jump in after p2 chosen
+        self.display_board() # jump in after p2 chosen
 
-    def display_starting_pieces(self) -> None:
+    def display_board(self) -> None:
         '''Blit the board image and score indicators'''
 
         self.screen.blit(self.boardIMG, (0,0))
@@ -633,6 +657,7 @@ class Game:
                 self.display_players()
                 self.computer_turn(Board.BLACK, self.chosen_p1)
                 time.sleep(0.1)
+                self.display_turn()
                 self.computer_turn(Board.WHITE, self.chosen_p2)
                 time.sleep(0.1)
             

@@ -57,19 +57,23 @@ class Board:
 
     def all_legal_moves(self, player: int) -> list:
         '''Return all legal moves for the player'''
-
-        legal_moves = set()
+        
+        full_legal_moves = []
         for r in range(8):
             for c in range(8):
                 if self.board[r, c] == player:
-                    moves = self.legal_moves(r, c, player)
-                    legal_moves.update(moves)
-        return list(legal_moves)
+                    new_moves = self.legal_moves(r, c, player)
+                    full_legal_moves.extend(new_moves)
+                    
+        # remove duplicates from moves list
+        full_legal_moves = list(set(full_legal_moves))
+        print(f"All legal moves for: {player}, :{full_legal_moves}")
+        return full_legal_moves
 
     def legal_moves(self, r, c, player):
         '''Return legal moves from a particular cell and player'''
         opponent = -player
-        valid_moves = set()
+        valid_moves = []
         
         for dx, dy in Board.DIRECTIONS:
             x, y = r + dx, c + dy
@@ -85,7 +89,7 @@ class Board:
                         break
                 # Place piece if the chain ends in an empty square
                 if self.is_valid_cell(x, y) and self.board[x, y] == Board.EMPTY:
-                    valid_moves.add((x, y))
+                    valid_moves.append((x, y))
         
         return valid_moves
 
@@ -118,6 +122,7 @@ class Board:
     def make_move(self, row, col, player):
         '''Make a move for the player at specified row and column, updating the board'''
         if (row, col) not in self.all_legal_moves(player):
+            print(f"Move: {row, col} not allowed for player {player}")
             raise ValueError("Move is not allowed")
 
         self.board[row, col] = player
