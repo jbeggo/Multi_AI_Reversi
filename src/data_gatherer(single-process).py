@@ -1,10 +1,10 @@
 from utils.board import Board
 from agents.MCTS_AI import Node, monte_carlo_tree_search, mcts_move
 from agents.minimax_AI import minimax_move, minimax_noprune_move
-from agents.greedy_AI import greedy_move
+from agents.greedy_AI import greedy_move, greedy_move_nondet
 from agents.negamax_AI import negamax_move
 from agents.random_AI import random_move
-from agents.value_matrix_AI import value_matrix_move, wipeout_matrix
+from agents.value_matrix_AI import evolutionary_matrix_move, wipeout_matrix_move
 #from DQN import QLearningPlayer
 import csv
 
@@ -19,7 +19,7 @@ black_wins = 0
 white_wins = 0
 draws = 0
 
-for _ in range(100):  # Play until game end
+for _ in range(1):  # Play until game end
     
     #print("Playing game number: ", _+1)
 
@@ -31,21 +31,23 @@ for _ in range(100):  # Play until game end
         if player == Board.BLACK:  # Data Gatherer turn
             #row, col = qagent.choose_action(board.board, board.all_legal_moves(Board.BLACK))
             #row, col = agent.dqn_move(board, Board.BLACK)
-            row, col = greedy_move(board, Board.BLACK)
+            row, col = mcts_move(board, Board.BLACK, 100)
             
             if row is not None and col is not None:
                 board.make_move(row, col, Board.BLACK)
-                board.print_board()
-            else:
-                print("Greedy player has no legal moves. Skipping turn.")
-
-        else:  # Random's turn
-            row, col = mcts_move(board, Board.WHITE, 250)
-            if row is not None and col is not None:
-                board.make_move(row, col, Board.WHITE)
+                print("MCTS Move: ", (row,col))
                 board.print_board()
             else:
                 print("MCTS player has no legal moves. Skipping turn.")
+
+        else:  # Agent 2
+            row, col = random_move(board, Board.WHITE)
+            if row is not None and col is not None:
+                board.make_move(row, col, Board.WHITE)
+                print("Random Move: ", (row,col))
+                board.print_board()
+            else:
+                print("Random player has no legal moves. Skipping turn.")
 
         player = Board.BLACK if player == Board.WHITE else Board.WHITE  # Switch players
     
@@ -59,9 +61,9 @@ for _ in range(100):  # Play until game end
     else:
         draws += 1
 
-#print ("Minimax Wins: ", white_wins)
-# Write the results to a file
-with open('results/results(Greedy vs MCTS[250])).csv', 'w', newline='') as file:
-    writer = csv.writer(file)
-    writer.writerow(["Greedy Wins", "MCTS Wins", "Draws"])
-    writer.writerow([black_wins, white_wins, draws])
+    #print ("Minimax Wins: ", white_wins)
+    # Write the results to a file
+    with open('results/MCTS [100] vs Random (100).csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["MCTS Wins", "Random Wins", "Draws"])
+        writer.writerow([black_wins, white_wins, draws])

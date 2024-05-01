@@ -1,6 +1,6 @@
 from utils.board import Board
 import numpy as np
-from AI_Players.random_AI import random_move
+from agents.random_AI import random_move
 
 # example matrix derived from FryLiZheng "Using Reinforcement Learning to Play Othello"
 value_matrix_frylizheng = np.array([
@@ -78,30 +78,6 @@ def value_matrix_move(board, player, given_matrix) -> tuple[int, int]:
     
     return best_move
 
-def reward(board: Board, player: int):
-    # Count the number of black and white pieces
-    black_count = np.sum(board.board == 1)
-    white_count = np.sum(board.board == -1)
-    
-    # Calculate the difference
-    if player == 1:
-        difference = black_count - white_count
-    else:
-        difference = white_count - black_count
-    
-    # Normalize the difference
-    normalized_difference = difference / 64.0  # Assuming an 8x8 board
-    
-    # Assign rewards based on the difference
-    if normalized_difference > 0:
-        reward = 1  # Positive reward for increasing advantage
-    elif normalized_difference < 0:
-        reward = -1  # Negative reward for decreasing advantage
-    else:
-        reward = 0  # No reward for maintaining advantage
-    
-    return reward
-
 def evolutionary_train(starting_matrix: np.array, episodes: int) -> np.array:
     '''Train the value matrix in the epsilon greedy style'''
     
@@ -150,10 +126,6 @@ def evolutionary_train(starting_matrix: np.array, episodes: int) -> np.array:
 
     return np.round(starting_matrix,4)
 
-
-#print(value_matrix)
-#new_matrix = train(value_matrix_frylizheng, num_episodes, learning_rate, epsilon)
-#final_matrix = np.round(new_matrix,1)
 new = evolutionary_train(value_matrix_frylizheng, 100)
 print(value_matrix_frylizheng)
 print ("\n")

@@ -1,6 +1,6 @@
 from utils.board import Board
 import numpy as np
-from AI_Players.random_AI import random_move
+from agents.random_AI import random_move
 
 # example matrix derived from FryLiZheng "Using Reinforcement Learning to Play Othello"
 value_matrix_frylizheng = np.array([

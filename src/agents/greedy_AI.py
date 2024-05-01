@@ -39,8 +39,9 @@ def greedy_move_nondet(board: Board, player: int, epsilon = 0.1) -> tuple[int, i
                 if eval >= best_eval:
                     best_move = (row, col)
                     best_eval = eval
-    
-    if random.random() < epsilon:
-        return random.choice(legal_moves)
+
+        # add chance to explore regardless
+        if random.random() < epsilon:
+            return random.choice(legal_moves)
     
     return best_move

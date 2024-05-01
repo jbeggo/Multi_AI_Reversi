@@ -1,5 +1,5 @@
 import numpy as np
-
+# ADAPTED FROM TERNION-1121/Othello-Reversi-Game
 class Board:
     
     WHITE = -1
@@ -25,11 +25,16 @@ class Board:
         self.board[3, 3] = self.board[4,4] = Board.WHITE
         self.board[3, 4] = self.board[4,3] = Board.BLACK
 
+        self.turn = 1
+
         self.update_counts()
     
     def update_counts(self):
         self.black_disk_count = np.sum(self.board == Board.BLACK)
         self.white_disk_count = np.sum(self.board == Board.WHITE)
+
+    def switch_turn(self):
+        self.turn *= -1
 
     def reset(self) -> None:
         self.__init__()

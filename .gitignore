@@ -7,3 +7,4 @@
 /trash
 *.csv
 src/utils/board.bak
+src/agents/MCTS_AI_old.py

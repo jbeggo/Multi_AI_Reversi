@@ -16,25 +16,24 @@ def minimax(board_state: Board, depth: int, alpha: int, beta: int, maximising: b
         maxEval = float('-inf')
         legal_moves = board_state.all_legal_moves(Board.BLACK)
         for row, col in legal_moves:
-            if board_state.board[row, col] == Board.EMPTY:
 
-                state_copy = deepcopy(board_state) 
-                state_copy.make_move(row, col, Board.BLACK)
+            state_copy = deepcopy(board_state) 
+            state_copy.make_move(row, col, Board.BLACK)
 
-                opponents_moves = state_copy.all_legal_moves(Board.WHITE)
-                # recursive call with depth -1 until starting state reached
-                eval = minimax(state_copy, depth - 1, alpha, beta, not opponents_moves)
+            opponents_moves = state_copy.all_legal_moves(Board.WHITE)
+            # recursive call with depth -1 until starting state reached
+            eval = minimax(state_copy, depth - 1, alpha, beta, not opponents_moves)
 
-                # update best evaluation
-                if eval >= maxEval:
-                    maxEval = eval
+            # update best evaluation
+            if eval >= maxEval:
+                maxEval = eval
 
-                #update alpha
-                if eval >= alpha:
-                    alpha = eval
- 
-                if beta <= alpha:
-                    break
+            #update alpha
+            if eval >= alpha:
+                alpha = eval
+
+            if beta <= alpha:
+                break
         #print("Maximised: ", maxEval)              
         return maxEval
 
@@ -42,28 +41,27 @@ def minimax(board_state: Board, depth: int, alpha: int, beta: int, maximising: b
     minEval = float('+inf')
     legal_moves = board_state.all_legal_moves(Board.WHITE)
     for row, col in legal_moves:
-        if board_state.board[row, col] == Board.EMPTY:
 
-            state_copy = deepcopy(board_state) 
-            state_copy.make_move(row, col, Board.WHITE)
+        state_copy = deepcopy(board_state) 
+        state_copy.make_move(row, col, Board.WHITE)
 
-            opponents_moves = state_copy.all_legal_moves(Board.BLACK)
-            eval = minimax(state_copy, depth - 1, alpha, beta, opponents_moves)
+        opponents_moves = state_copy.all_legal_moves(Board.BLACK)
+        eval = minimax(state_copy, depth - 1, alpha, beta, opponents_moves)
 
-            # update minimum evaluation
-            if eval <= minEval:
-                minEval = eval
+        # update minimum evaluation
+        if eval <= minEval:
+            minEval = eval
 
-            # update beta
-            if eval <= beta:
-                beta = eval
+        # update beta
+        if eval <= beta:
+            beta = eval
 
-            if beta <= alpha:
-                break
+        if beta <= alpha:
+            break
     #print("Minimised: ", minEval)
     return minEval
 
-def minimax_simple(position, depth, isMaximizingPlayer):
+def minimax_noprune(position, depth, isMaximizingPlayer):
     '''Simple Minimax without alpha-beta pruning'''
     
     # Check for if game over return heuristic value of node
@@ -77,13 +75,12 @@ def minimax_simple(position, depth, isMaximizingPlayer):
         maxEval = float('-inf')
         legal_moves = position.all_legal_moves(Board.BLACK)
         for row, col in legal_moves:
-            if position.board[row, col] == Board.EMPTY:
-                position_deepcopy = deepcopy(position) 
-                position_deepcopy.make_move(row, col, Board.BLACK)
+            position_deepcopy = deepcopy(position) 
+            position_deepcopy.make_move(row, col, Board.BLACK)
 
-                opponents_moves = position_deepcopy.all_legal_moves(Board.WHITE)
-                eval = minimax_simple(position_deepcopy, depth - 1, opponents_moves == set())
-                maxEval = max(maxEval, eval)
+            opponents_moves = position_deepcopy.all_legal_moves(Board.WHITE)
+            eval = minimax_noprune(position_deepcopy, depth - 1, opponents_moves == set())
+            maxEval = max(maxEval, eval)
 
         return maxEval
 
@@ -96,7 +93,7 @@ def minimax_simple(position, depth, isMaximizingPlayer):
                 position_deepcopy.make_move(row, col, Board.WHITE)
 
                 opponents_moves = position_deepcopy.all_legal_moves(Board.BLACK)
-                eval = minimax_simple(position_deepcopy, depth - 1, opponents_moves == set())
+                eval = minimax_noprune(position_deepcopy, depth - 1, opponents_moves == set())
                 minEval = min(minEval, eval)
 
         return minEval
@@ -112,29 +109,27 @@ def minimax_move(board_state: Board, player: int, depth: int) -> tuple[int, int]
         bestEval = float('-inf')
     
     legal_moves = board_state.all_legal_moves(player)
-    for row, col in legal_moves:
-        pos = board_state.board[row, col]
-        if pos == Board.EMPTY:
+    for row, col in legal_moves: # due to iterating one layer deep here, depth is actually called depth+1
 
-            state_copy = deepcopy(board_state) # create a deep copy of the board position
-            state_copy.make_move(row, col, player)
+        state_copy = deepcopy(board_state) # create a deep copy of the board position
+        state_copy.make_move(row, col, player)
 
-            #opponents_moves = position_deepcopy.all_legal_moves(opponent)
-            
-            # minimax call
-            if player == Board.WHITE:
-                currentEval = minimax(state_copy, depth, float('-inf'), float('inf'), True)
-            else:  # player == Board.BLACK
-                currentEval = minimax(state_copy, depth, float('-inf'), float('inf'), False)
+        #opponents_moves = position_deepcopy.all_legal_moves(opponent)
+        
+        # minimax call
+        if player == Board.WHITE:
+            currentEval = minimax(state_copy, depth, float('-inf'), float('inf'), True)
+        else:  # player == Board.BLACK
+            currentEval = minimax(state_copy, depth, float('-inf'), float('inf'), False)
 
-            if player == Board.WHITE and currentEval <= bestEval: # minimised
-                bestMove = (row, col)
-                bestEval = currentEval # best eval for white
-            elif player == Board.BLACK and currentEval >= bestEval: # maximised
-                bestMove = (row, col)
-                bestEval = currentEval # best eval for black
+        if player == Board.WHITE and currentEval <= bestEval: # minimised
+            bestMove = (row, col)
+            bestEval = currentEval # best eval for white
+        elif player == Board.BLACK and currentEval >= bestEval: # maximised
+            bestMove = (row, col)
+            bestEval = currentEval # best eval for black
 
-            #print("Best eval: ", bestEval)
+        #print("Best eval: ", bestEval)
 
     return bestMove
 
@@ -158,9 +153,9 @@ def minimax_noprune_move(position: Board, player: int, depth: int) -> tuple[int,
             
             # minimax call
             if player == Board.WHITE: # minimising
-                currentEval = minimax_simple(position_deepcopy, depth, True)
+                currentEval = minimax_noprune(position_deepcopy, depth, True)
             else:  # minimising
-                currentEval = minimax_simple(position_deepcopy, depth, False)
+                currentEval = minimax_noprune(position_deepcopy, depth, False)
 
             if player == Board.WHITE and currentEval <= bestEval: # minimised
                 bestMove = (row, col)
