@@ -9,7 +9,7 @@ from keras.layers import Input, Dense
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard
 import datetime
-from agents.random_AI import random_move
+from agents.random import random_move
 from keras.initializers import RandomUniform
 
 # Define the weight initializer

@@ -19,8 +19,8 @@ EVOLVED = np.array([
     [3.2125, 1.7928, 1.875,  1.9948, 1.975,  1.8938, 1.7572, 3.2125],
     [0.15,   2.3228, 0.6625, 1.8375, 1.8375, 0.6624, 2.3,    0.1515],
     [3.525,  0.85,   2.7017, 0.1768, 0.175,  2.675,  0.85,   3.525 ],
-    [1.125,  1.9498, 0.15,   0.,     0.,     0.15,   1.9305, 1.125 ],
-    [1.125,  1.9695, 0.1515, 0.,     0.,     0.1485, 1.9305, 1.125 ],
+    [1.125,  1.9498, 0.15,   0,     0,     0.15,   1.9305, 1.125 ],
+    [1.125,  1.9695, 0.1515, 0,     0,     0.1485, 1.9305, 1.125 ],
     [3.4898, 0.85,   2.675,  0.1732, 0.175,  2.6482, 0.8331, 3.5602],
     [0.15,   2.277,  0.6625, 1.8559, 1.8559, 0.6559, 2.3,    0.1515],
     [3.2125, 1.7571, 1.9127, 2.0147, 1.975,  1.8938, 1.775,  3.2125]
@@ -69,7 +69,7 @@ def endgame_score(board: Board, player: int) -> int:
     return player_count - opponent_count
 
 def evolutionary_matrix_move(board: Board, player: int) -> tuple[int, int]:
-    '''Calculate a best move for player from matrix, return (None,None) to skip'''
+    '''Calculate a best move for player from evolved matrix, return (None,None) to skip'''
     
     # Generate all possible moves
     moves = board.all_legal_moves(player)
@@ -87,12 +87,7 @@ def evolutionary_matrix_move(board: Board, player: int) -> tuple[int, int]:
         new_board = copy.deepcopy(board)
         new_board.make_move(row, col, player)
 
-        # switch to parity play
-        if end_game_close(new_board):
-            score = endgame_score(new_board, player)
-        # else play by matrix
-        else:
-            score = positional_score(new_board, player, EVOLVED)
+        score = positional_score(new_board, player, EVOLVED)
 
         if score > best_score:
             best_score = score
