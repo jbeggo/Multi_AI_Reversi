@@ -28,7 +28,7 @@ def negamax(position: Board, depth: int, alpha: int, beta: int, player: int) -> 
 
     return max_eval
 
-def negamax_move(position: Board, player: int) -> tuple[int, int]:
+def negamax_move(position: Board, player: int, depth: int) -> tuple[int, int]:
     '''Uses negamax to return a move coord tuple for player'''
     
     bestMove = (None,None)
@@ -41,7 +41,7 @@ def negamax_move(position: Board, player: int) -> tuple[int, int]:
             position_deepcopy = deepcopy(position) # create a deep copy of the board position
             position_deepcopy.make_move(row, col, player)
 
-            currentEval = -negamax(position_deepcopy, 2, float('-inf'), float('inf'), player*-1)
+            currentEval = -negamax(position_deepcopy, depth-1, float('-inf'), float('inf'), player*-1)
 
             if (player == Board.WHITE and currentEval < bestEval) or (player == Board.BLACK and currentEval > bestEval):
                 bestMove = (row, col)

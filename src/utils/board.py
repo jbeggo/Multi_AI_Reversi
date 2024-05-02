@@ -53,6 +53,21 @@ class Board:
             return 'White'
         else:
             return 'Draw'
+        
+    def get_winner_int(self):
+        '''Returns the winner of the game'''
+
+        # Count the number of pieces for each player
+        black_pieces = np.sum(self.board == Board.BLACK)
+        white_pieces = np.sum(self.board == Board.WHITE)
+
+        # Determine the winner
+        if black_pieces > white_pieces:
+            return 1
+        elif white_pieces > black_pieces:
+            return -1
+        else:
+            return 0
     
     @staticmethod
     def is_valid_cell(x: int, y: int) -> bool:

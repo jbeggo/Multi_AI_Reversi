@@ -1,11 +1,12 @@
 from utils.board import Board
-from agents.minimax import minimax_move, minimax_noprune_move
+from agents.minimax import minimax_move
 from agents.random import random_move
 from agents.greedy import greedy_move
 from agents.negamax import negamax_move
 from agents.mcts import mcts_move
 from agents.value_matrix import evolutionary_matrix_move, wipeout_matrix_move
 from agents.dqn import Qagent
+
 import pygame, time
 from pygame import gfxdraw
 
@@ -389,9 +390,9 @@ class Game:
         elif agent == "greedy":
             r, c = greedy_move(self.game_board, player)
         elif agent == "negamax [2]":
-            r, c = negamax_move(self.game_board, player)
+            r, c = negamax_move(self.game_board, player, 2)
         elif agent == "minimax [2]":
-            r, c = minimax_noprune_move(self.game_board, player, 2)
+            r, c = minimax_move(self.game_board, player, 2)
         elif agent == "minimax [3]":
             r, c = minimax_move(self.game_board, player, 3)
         elif agent == "mcts-100":
