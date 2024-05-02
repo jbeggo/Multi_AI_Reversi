@@ -1,11 +1,11 @@
 from multiprocessing import Pool
 from utils.board import Board
-from agents.MCTS_AI import Node, monte_carlo_tree_search, mcts_move
-from agents.minimax_AI import minimax_move
-from agents.greedy_AI import greedy_move, greedy_move_nondet
-from agents.negamax_AI import negamax_move
-from agents.random_AI import random_move
-from agents.value_matrix_AI import evolutionary_matrix_move, wipeout_matrix_move
+from agents.mcts import Node, monte_carlo_tree_search, mcts_move
+from agents.minimax import minimax_move
+from agents.greedy import greedy_move, greedy_move_nondet
+from agents.negamax import negamax_move
+from agents.random import random_move
+from agents.value_matrix import evolutionary_matrix_move, wipeout_matrix_move
 import csv
 
 
@@ -21,8 +21,8 @@ black_wins = 0
 white_wins = 0
 draws = 0
 
-TOTAL_GAMES = 100
-BATCH_SIZE = 4
+TOTAL_GAMES = 120
+BATCH_SIZE = 12
 
 def play_game(game_number):
     #try: 
@@ -35,23 +35,23 @@ def play_game(game_number):
         while not board.is_game_over():
         
             if player == Board.BLACK:  # Agent 1
-                row, col = mcts_move(board, Board.BLACK, 100)
+                row, col = minimax_move(board, Board.BLACK, 3)
                 
                 if row is not None and col is not None:
                     board.make_move(row, col, Board.BLACK)
 
             else:  # Agent 2
+                row, col = random_move(board, Board.WHITE)
                 
-                row, col = greedy_move(board, Board.WHITE)
                 if row is not None and col is not None:
                     board.make_move(row, col, Board.WHITE)
             
             # Switch players
-            player = Board.BLACK if player == Board.WHITE else Board.WHITE  
+            player *=-1  
         
         winner = board.get_winner()
         print(f'Game {game_number+1} finish')
-        print(f'///////////////////////////////////////Winner: {winner}')
+        print(f'--------------------------------------Winner: {winner}')
         return winner
     
     #except Exception as e:
@@ -84,7 +84,7 @@ if __name__ == "__main__":
             draws = results.count('Draw')
 
             # Write the results to a file...
-            with open('results/MCTS [50] vs Greedy[nondet] (100).csv', 'w', newline='') as file:
+            with open('results/Minimax[3] vs Random (100).csv', 'w', newline='') as file:
                 writer = csv.writer(file)
-                writer.writerow(["MCTS [50]", "Greedy", "Draws"])
+                writer.writerow(["Minimax[3]", "Random", "Draws"])
                 writer.writerow([black_wins, white_wins, draws])

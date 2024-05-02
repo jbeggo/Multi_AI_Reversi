@@ -1,10 +1,10 @@
 from utils.board import Board
-from agents.MCTS_AI import Node, monte_carlo_tree_search, mcts_move
-from agents.minimax_AI import minimax_move, minimax_noprune_move
-from agents.greedy_AI import greedy_move, greedy_move_nondet
-from agents.negamax_AI import negamax_move
-from agents.random_AI import random_move
-from agents.value_matrix_AI import evolutionary_matrix_move, wipeout_matrix_move
+from agents.mcts import Node, monte_carlo_tree_search, mcts_move
+from agents.minimax import minimax_move, minimax_noprune_move
+from agents.greedy import greedy_move, greedy_move_nondet
+from agents.negamax import negamax_move
+from agents.random import random_move
+from agents.value_matrix import evolutionary_matrix_move, wipeout_matrix_move
 #from DQN import QLearningPlayer
 import csv
 
@@ -31,7 +31,7 @@ for _ in range(1):  # Play until game end
         if player == Board.BLACK:  # Data Gatherer turn
             #row, col = qagent.choose_action(board.board, board.all_legal_moves(Board.BLACK))
             #row, col = agent.dqn_move(board, Board.BLACK)
-            row, col = mcts_move(board, Board.BLACK, 100)
+            row, col = mcts_move(board, Board.BLACK, 500)
             
             if row is not None and col is not None:
                 board.make_move(row, col, Board.BLACK)

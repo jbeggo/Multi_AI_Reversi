@@ -21,10 +21,10 @@ def select(node):
     while node.children:
         # return node with highest UCB score
         node = max(node.children, key=ucb_score)
-    selected = node.last_move
-    if node.depth == 0:
-        selected = 'root'
-    print(f"Node {selected} selected, with visit count {node.visit_count}, UCT score {ucb_score(node)}")
+    #selected = node.last_move
+    #if node.depth == 0:
+        #selected = 'root'
+    #print(f"Node {selected} selected, with visit count {node.visit_count}, UCT score {ucb_score(node)}")
     return node
 
 def ucb_score(node):
@@ -61,20 +61,13 @@ def expand(node) -> Node:
 def backpropagate(node, winner):
     ''' Traverse back through the tree from outcome, updating score as we go '''
     
-    if winner == 'Black':
-        winner = 1
-    elif winner == 'White':
-        winner = -1
-    else:
-        winner = 0
-
     while node:
         id = node.last_move if node.parent else 'root'
         parent = node.parent.last_move if node.parent else 'root'
         if parent == None:
             parent = 'root'
         node.visit_count += 1
-        if winner == node.player:
+        if winner == node.player*-1: #I messed up turn and player somewhere and this seems to fix it 
             node.wins += 1
             #print(f"BP Node {id} of player type: {node.player} node won - visits: {node.visit_count} wins: {node.wins}")
         elif winner == 0:# node drew
@@ -84,11 +77,10 @@ def backpropagate(node, winner):
             #print(f"BP Node {id} of player type: {node.player} draw - visits: {node.visit_count} wins: {node.wins}")
         node = node.parent
 
-def simulate(node) -> int:
-    ''' Simulate a random rollout to end of game and return the result '''
-    board = copy.deepcopy(node.board)
-    #original_player = node.player
-    player = node.player
+
+def play_game_random(start_player: int, board: Board) -> int:
+    board = copy.deepcopy(board)
+    player = start_player
     while not board.is_game_over():
         legal_moves = board.all_legal_moves(player)
         if not legal_moves:  # If the player has no legal moves, switch to the other player
@@ -97,9 +89,17 @@ def simulate(node) -> int:
         row , col = random.choice(legal_moves)
         board.make_move(row, col, player)
         player *= -1 # Switch players after making a move
+    
+    return board.get_winner_int()
+
+def simulate(node) -> int:
+    ''' Simulate a random rollout to end of game and return the result '''
+    #original_player = node.player
+    player = node.player
+    result = play_game_random(player, node.board)
     node.simulated = True
     #print(f"Simulated from {node.last_move} of player type {original_player} to result {board.get_winner()}")
-    return board.get_winner()
+    return result
 
 def monte_carlo_tree_search(root, num_iterations):
     ''' Main MCTS steps to return best next move '''
@@ -121,8 +121,8 @@ def monte_carlo_tree_search(root, num_iterations):
         #for child in root.children:
             #for child in child.children:
                 #print(f"Child children {child.last_move} Visit count: {node.visit_count} Wins: {node.wins}")
-            #print(f"Available choice {child.last_move} Visit count: {child.visit_count} Wins: {child.wins}")
-        #print(f"Node chosen {best_child.last_move} Visit count: {best_child.visit_count} Wins: {best_child.wins}")
+            #print(f"Available choice {child.last_move} Player {child.player} Parent {child.parent.last_move} Visit count: {child.visit_count} Wins: {child.wins}")
+        #print(f"Node chosen {best_child.last_move} Player {best_child.player} UCT: {ucb_score(best_child)} Visit count: {best_child.visit_count} Wins: {best_child.wins}")
         return best_child
     else:
         return (None, None)

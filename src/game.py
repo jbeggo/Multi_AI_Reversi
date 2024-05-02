@@ -1,11 +1,11 @@
 from utils.board import Board
-from agents.minimax_AI import minimax_move, minimax_noprune_move
-from agents.random_AI import random_move
-from agents.greedy_AI import greedy_move
-from agents.negamax_AI import negamax_move
-from agents.MCTS_AI import mcts_move
-from agents.value_matrix_AI import evolutionary_matrix_move, wipeout_matrix_move
-from agents.dqn_AI import Qagent
+from agents.minimax import minimax_move, minimax_noprune_move
+from agents.random import random_move
+from agents.greedy import greedy_move
+from agents.negamax import negamax_move
+from agents.mcts import mcts_move
+from agents.value_matrix import evolutionary_matrix_move, wipeout_matrix_move
+from agents.dqn import Qagent
 import pygame, time
 from pygame import gfxdraw
 
